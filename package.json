@@ -1,0 +1,23 @@
+{
+  "name": "noir-billiards",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "node --test tests/physics.test.js",
+    "test:browser": "node tests/browser.mjs",
+    "test:clearance": "node tests/clearance.mjs",
+    "test:break": "node tests/break.mjs",
+    "capture": "node tests/visual.mjs"
+  },
+  "dependencies": {
+    "three": "^0.180.0"
+  },
+  "devDependencies": {
+    "vite": "^7.1.7",
+    "playwright": "^1.56.0"
+  }
+}

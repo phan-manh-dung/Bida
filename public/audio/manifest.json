@@ -1,0 +1,7 @@
+{
+  "break": ["/audio/break.wav"],
+  "shot": [],
+  "collision": ["/audio/impact-01.wav", "/audio/impact-02.wav", "/audio/impact-03.wav"],
+  "cushion": [],
+  "pocket": ["/audio/pocket.wav"]
+}

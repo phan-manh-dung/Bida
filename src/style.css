@@ -1,0 +1,123 @@
+:root {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #e6ebee;
+  background: #161b21;
+  color-scheme: dark;
+  font-synthesis: none;
+  --line: #ffffff14;
+  --muted: #8e9ba7;
+}
+* { box-sizing: border-box; }
+html, body, #app { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+button, input { font: inherit; }
+button { color: inherit; background: none; border: 0; cursor: pointer; }
+button, input { -webkit-tap-highlight-color: transparent; }
+button:disabled { opacity: .4; cursor: default; }
+button:focus-visible, input:focus-visible, [tabindex]:focus-visible, summary:focus-visible { outline: 2px solid #bad4df; outline-offset: 5px; }
+svg { display: block; flex-shrink: 0; }
+#game { position: fixed; inset: 0; overflow: hidden; }
+#scene { position: absolute; inset: 0; }
+#scene canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
+.icon-button { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; color: #c3cdd4; }
+.icon-button:hover { color: #fff; background: #ffffff12; }
+.floating { position: absolute; background: #10161c94; border: 1px solid #c0d7eb1c; backdrop-filter: blur(10px); }
+.menu-toggle { bottom: max(24px, env(safe-area-inset-bottom)); left: max(24px, env(safe-area-inset-left)); }
+.settings-toggle { top: max(24px, env(safe-area-inset-top)); right: max(23px, env(safe-area-inset-right)); }
+.camera-control { position: absolute; bottom: max(24px, env(safe-area-inset-bottom)); right: 122px; display: flex; gap: 5px; padding: 5px; background: #10161c94; border: 1px solid #c0d7eb1c; border-radius: 13px; backdrop-filter: blur(10px); }
+.camera-button { display: grid; place-items: center; width: 42px; height: 38px; color: #8d9ca8; border-radius: 8px; }
+.camera-button.active { background: #d0dce416; color: #eef5fa; }
+.camera-button:hover { background: #d0dce424; color: #fff; }
+
+/* The cue itself is the shot control; dragging never scrolls the page or rotates the camera. */
+.cue-control { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); width: 70px; height: clamp(270px, 66dvh, 620px); user-select: none; -webkit-user-select: none; }
+.pull-cue { --pull: 0px; width: 100%; height: 100%; position: relative; touch-action: none; cursor: grab; border: 1px solid #c0d7eb16; border-radius: 18px; background: linear-gradient(90deg,#0d121818,#10171d95 50%,#0d121818); overflow: hidden; }
+.pull-cue:active { cursor: grabbing; }
+.cue-ruler { position: absolute; inset: 7% 9px 10% auto; width: 7px; opacity: .25; background: repeating-linear-gradient(0deg,transparent 0,transparent calc(10% - 1px),#b0bec8 calc(10% - 1px),#b0bec8 10%); }
+.cue-stick { position: absolute; top: 5%; left: 21px; width: 20px; height: 90%; transform: translateY(var(--pull)); filter: drop-shadow(3px 2px 3px #0008); display: flex; flex-direction: column; align-items: center; pointer-events: none; }
+.cue-stick i { display: block; }
+.cue-tip { width: 6px; height: 5px; flex-shrink: 0; border-radius: 3px 3px 0 0; background: linear-gradient(90deg,#366c8c,#a0c5d4,#466f83); }
+.cue-ferrule { width: 6px; height: 11px; flex-shrink: 0; background: linear-gradient(90deg,#b5b9b4,#fff9de 45%,#d9d2be); }
+.cue-shaft { height: 59%; width: 13px; clip-path: polygon(27% 0,73% 0,100% 100%,0 100%); background: repeating-linear-gradient(88deg,transparent 0,transparent 3px,#71512419 4px),linear-gradient(90deg,#b3955e,#f8e5b5 36%,#d6bc86 73%,#a48755); }
+.cue-joint { width: 13px; height: 8px; flex-shrink: 0; background: linear-gradient(90deg,#5d646b,#e3e0cb 35%,#a5a6a1 73%,#4f555b); border-top: 2px solid #18222a; border-bottom: 2px solid #18222a; }
+.cue-grip { height: 36%; width: 17px; clip-path: polygon(13% 0,87% 0,100% 100%,0 100%); background: repeating-linear-gradient(15deg,transparent 0,transparent 3px,#ffffff0c 4px),linear-gradient(90deg,#0a1018,#344552 34%,#182832 65%,#0a131b); }
+.cue-butt { width: 18px; height: 13px; flex-shrink: 0; border-top: 3px solid #adb1af; border-radius: 0 0 5px 5px; background: linear-gradient(90deg,#080c11,#2d343b,#080c11); }
+.force-track { position: absolute; top: 7%; bottom: 10%; right: 21px; width: 2px; border-radius: 3px; background: #8999a314; }
+#force-fill { position: absolute; top: 0; width: 100%; height: 0; background: #a9c5d1; border-radius: 3px; box-shadow: 0 0 10px #bedde04d; }
+#power-value { position: absolute; bottom: 12px; left: 0; right: 0; color: #c9dce5; font-size: 11px; font-variant-numeric: tabular-nums; text-align: center; opacity: 0; transition: opacity .15s; }
+#power-value::after { content: '%'; font-size: 8px; margin-left: 2px; opacity: .65; }
+.charged #power-value { opacity: 1; }
+.cue-hint { position: absolute; top: calc(100% + 14px); left: -10px; right: -10px; text-align: center; color: #7c8994; font-size: 9px; letter-spacing: .25px; white-space: nowrap; }
+.cue-control.disabled { opacity: .35; }
+.cue-control.disabled .pull-cue { cursor: default; }
+.releasing .cue-stick { transition: transform 60ms linear; }
+.dragging .pull-cue { border-color: #b3c6d04d; }
+
+dialog { width: min(410px,calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow-y: auto; padding: 30px; background: #1b2229; border: 1px solid #b5cada29; border-radius: 18px; color: #e8eef2; box-shadow: 0 20px 100px #0006; }
+dialog::backdrop { background: #050b115e; backdrop-filter: blur(5px); }
+.close-dialog { position: absolute; top: 12px; right: 12px; width: 36px; height: 36px; }
+.overline { font-size: 9px; letter-spacing: 2.5px; color: #8b9ba6; margin: 6px 0 13px; }
+h1 { font: 36px Georgia,serif; letter-spacing: 6px; margin: 0 0 8px; }
+h2 { font-size: 23px; font-weight: 500; margin: 0 0 25px; }
+.muted { color: var(--muted); font-size: 12px; line-height: 1.8; }
+.stats { display: grid; grid-template-columns: 1fr 1fr; margin: 25px 0; padding: 20px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.stats>div { display: flex; flex-direction: column; gap: 9px; }
+.stats span { color: var(--muted); font-size: 11px; }
+.stats strong { font-weight: 400; font-size: 27px; }
+.stats small { font-size: 12px; color: var(--muted); }
+.menu-item { display: flex; gap: 14px; align-items: center; width: 100%; padding: 14px 3px; font-size: 13px; text-align: left; border-radius: 6px; }
+.menu-item>svg:first-child { color: #8eabbc; width: 18px; }
+.menu-item>svg:last-child { margin-left: auto; color: #6c808f; width: 15px; }
+.menu-item:hover { background: #ffffff06; }
+.settings-dialog { position: fixed; inset: 12px 12px 12px auto; margin: 0; width: min(350px,calc(100vw - 24px)); height: calc(100dvh - 24px); max-height: none; padding: 32px 27px; }
+.setting-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 68px; border-bottom: 1px solid var(--line); font-size: 13px; }
+.setting-note { color: #8d9da9; font-size: 11px; line-height: 1.9; }
+.switch { appearance: none; width: 34px; height: 19px; border: 1px solid #576a775e; border-radius: 20px; background: #33424d; position: relative; cursor: pointer; flex-shrink: 0; }
+.switch::before { content: ''; position: absolute; top: 2px; left: 2px; border-radius: 50%; height: 13px; width: 13px; background: #a7b3bb; transition: transform .15s; }
+.switch:checked { background: #648799; }
+.switch:checked::before { transform: translateX(15px); background: #e9f0f4; }
+.switch:disabled { opacity: .35; cursor: default; }
+.cloth-options { display: flex; gap: 12px; }
+.cloth-swatch { display: grid; place-items: center; width: 23px; height: 23px; border-radius: 50%; }
+.cloth-swatch[data-cloth=blue] { background: #21779e; }
+.cloth-swatch[data-cloth=gray] { background: #343a3d; }
+.cloth-swatch[data-cloth=green] { background: #18705a; }
+.cloth-swatch[data-cloth=wine] { background: #8c3b50; }
+.cloth-swatch[aria-pressed=true] { outline: 1px solid #b6cbd4; outline-offset: 3px; }
+.cloth-swatch svg { width: 14px; height: 14px; }
+.nudge-controls { display: flex; gap: 5px; }
+.nudge-controls .icon-button { width: 34px; height: 32px; border: 1px solid var(--line); border-radius: 6px; }
+.audio-import { border-top: 1px solid var(--line); margin-top: 22px; padding-top: 18px; }
+.audio-import summary { color: #acbfc9; font-size: 12px; cursor: pointer; }
+.audio-file { display: grid; gap: 8px; font-size: 11px; margin-top: 20px; }
+.audio-file input { font-size: 10px; width: 100%; color: #9babb7; }
+.audio-file input::file-selector-button { background: #2c3a45; color: #d3e2eb; border: 0; border-radius: 4px; padding: 7px 9px; cursor: pointer; }
+.audio-file span { font-size: 10px; color: #8b9daa; }
+.layout-option { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 19px 14px; margin-top: 12px; border: 1px solid #7187964d; border-radius: 9px; font-size: 13px; }
+.layout-option:hover { background: #859cad12; }
+ol { padding-left: 20px; font-size: 13px; line-height: 1.9; color: #b9c6cf; }
+li { padding-left: 5px; margin-bottom: 14px; }
+#loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; background: #161b21; text-align: center; color: #aebec9; font-size: 13px; line-height: 1.8; }
+.loading-ball { display: grid; place-items: center; width: 48px; height: 48px; border: 1px solid #aabac755; border-radius: 50%; font: 27px Georgia; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+@media(max-width:700px) {
+  .cue-control { right: 8px; width: 58px; height: clamp(230px,60dvh,530px); }
+  .cue-stick { left: 15px; }
+  .cue-ruler { right: 5px; }
+  .force-track { right: 13px; }
+  .cue-hint { font-size: 8px; }
+  .settings-toggle { width: 40px; height: 40px; right: 16px; top: max(16px,env(safe-area-inset-top)); }
+  .menu-toggle { width: 40px; height: 40px; left: 16px; bottom: max(16px,env(safe-area-inset-bottom)); }
+  .camera-control { bottom: max(16px,env(safe-area-inset-bottom)); right: 84px; gap: 2px; padding: 4px; }
+  .camera-button { width: 36px; height: 32px; }
+  .camera-button svg { width: 18px; height: 18px; }
+}
+@media(max-height:500px) {
+  .cue-control { right: 8px; width: 58px; height: 64dvh; }
+  .cue-stick { left: 15px; }
+  .cue-hint { top: calc(100% + 7px); font-size: 8px; }
+  .settings-toggle { width: 34px; height: 34px; top: 10px; right: 20px; }
+  .menu-toggle { width: 36px; height: 36px; left: 14px; bottom: 12px; }
+  .camera-control { bottom: 12px; right: 88px; }
+  .camera-button { height: 28px; width: 34px; }
+}
+@media(prefers-reduced-motion:reduce) { * { transition: none !important; } }

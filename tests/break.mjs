@@ -1,0 +1,54 @@
+import {chromium} from 'playwright';
+import assert from 'node:assert/strict';
+const browser=await chromium.launch({channel:'chrome',headless:true});
+const baseURL=process.env.BASE_URL||'http://127.0.0.1:5173/';
+try {
+ const page=await browser.newPage({viewport:{width:1440,height:900}}),errors=[];
+ page.on('pageerror',e=>errors.push(e.message));
+ await page.goto(baseURL,{waitUntil:'networkidle'});
+ await page.waitForFunction(()=>window.__noir?.scene);
+ assert.equal(await page.evaluate(()=>window.__noir.physics.layout),'rack');
+ assert.equal(await page.evaluate(()=>window.__noir.scene.ballShadows.size),0);
+ assert.equal(await page.evaluate(()=>window.__noir.scene.scene.getObjectByName('table-markings').children.length),3);
+ await page.locator('[data-view="top"]').click();
+ await page.waitForTimeout(150);
+ const project=z=>page.evaluate(z=>{const {physics:p,scene:s}=window.__noir;return s.project(p.cueBall.x,z,.035+.099);},z);
+ const start=await project(0),end=await project(1.1);
+ const camera=await page.evaluate(()=>window.__noir.scene.camera.position.toArray());
+ await page.mouse.move(start.x,start.y);await page.mouse.down();await page.mouse.move(end.x,end.y,{steps:12});
+ assert.equal(await page.locator('#pull-cue').getAttribute('aria-disabled'),'true');
+ await page.keyboard.down('Space');await page.keyboard.up('Space');
+ assert.equal(await page.evaluate(()=>window.__noir.physics.shots),0);
+ await page.mouse.up();
+ assert.ok(Math.abs(await page.evaluate(()=>window.__noir.physics.cueBall.z)-1.1)<.03);
+ assert.ok((await page.evaluate(()=>window.__noir.scene.camera.position.toArray())).every((v,i)=>Math.abs(v-camera[i])<1e-8));
+ const moved=await project(1.1),back=await project(-1);
+ await page.mouse.move(moved.x,moved.y);await page.mouse.down();await page.mouse.move(back.x,back.y,{steps:8});
+ await page.keyboard.press('Escape');await page.mouse.up();
+ assert.ok(Math.abs(await page.evaluate(()=>window.__noir.physics.cueBall.z)-1.1)<.03);
+ assert.equal(await page.evaluate(()=>window.__noir.scene.controls.enabled),true);
+ await page.screenshot({path:'artifacts/break-placement-v5.png'});
+ await page.evaluate(()=>{window.__noir.physics.shoot(0,.1);});
+ await page.waitForFunction(()=>!window.__noir.physics.moving);
+ assert.equal(await page.evaluate(()=>window.__noir.physics.canPlaceCue),false);
+ await page.locator('#menu-toggle').click();await page.locator('#new-game').click();
+ assert.equal(await page.locator('[data-layout="practice"]').count(),0);
+ await page.locator('[data-layout="rack"]').click();
+ assert.equal(await page.evaluate(()=>window.__noir.physics.canPlaceCue),true);
+ assert.equal(await page.evaluate(()=>window.__noir.physics.cueBall.z),0);
+ const mobile=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+ const touch=await mobile.newPage();touch.on('pageerror',e=>errors.push(e.message));
+ await touch.goto(baseURL,{waitUntil:'networkidle'});await touch.waitForFunction(()=>window.__noir?.scene);
+ await touch.locator('[data-view="top"]').click();
+ await touch.waitForTimeout(150);
+ const points=await touch.evaluate(()=>{const {physics:p,scene:s}=window.__noir;return [0,.8].map(z=>s.project(p.cueBall.x,z,.134));});
+ const cdp=await mobile.newCDPSession(touch);
+ for(const cancel of [true,false]) {
+  await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[points[0]]});
+  await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[points[1]]});
+  await cdp.send('Input.dispatchTouchEvent',{type:cancel?'touchCancel':'touchEnd',touchPoints:[]});
+  assert.ok(Math.abs(await touch.evaluate(()=>window.__noir.physics.cueBall.z)-(cancel?0:.8))<.04);
+ }
+ assert.equal(await touch.evaluate(()=>window.__noir.physics.shots),0);
+ assert.deepEqual(errors,[]);console.log('PASS: rack, markings, no shadow discs, mouse/touch placement, cancellation, no camera rotation, shot lock and new rack reset.');
+}finally{await browser.close();}

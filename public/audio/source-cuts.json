@@ -1,0 +1,20 @@
+[
+  {
+    "source": "phá bi.MP3",
+    "sha256": "7d1b6dcf36584d1fdc3bb1d6d4c622799bb3c4800b1b5265a97d3a56c6e6d4ac",
+    "file": "break.wav",
+    "start": 0.329,
+    "end": 1.071,
+    "classification": "User-labeled source; onset inferred from isolated first impact then later multi-impact cluster. Not verified by listening.",
+    "processing": "Mono PCM16 44100 Hz, DC removal, peak .72, 2 ms start fade and 45 ms end fade. No generated audio."
+  },
+  {
+    "source": "đánh bi rớt xuống lỗ.MP3",
+    "sha256": "416ca64161d05826f61d5014a9ad2fbdf28f3fe2803d2fe9051eeb9979b79c81",
+    "file": "pocket.wav",
+    "start": 0.318,
+    "end": 1.4,
+    "classification": "User-labeled source; onset inferred from isolated first impact then later multi-impact cluster. Not verified by listening.",
+    "processing": "Mono PCM16 44100 Hz, DC removal, peak .72, 2 ms start fade and 45 ms end fade. No generated audio."
+  }
+]
