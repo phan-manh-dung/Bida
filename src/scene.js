@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { BALL_COLORS, STEP } from './physics.js';
-import { HALF_X, HALF_Z, OUTER_X, OUTER_Z, RADIUS, CLOTH_Y as Y, FOOT_SPOT_X } from './table-model.js';
+import { HALF_X, HALF_Z, OUTER_X, OUTER_Z, RADIUS, CLOTH_Y as Y, FOOT_SPOT_X, POCKET_DETAILS } from './table-model.js';
 import { buildTournamentTable, texture, RAIL_SURFACE_Y } from './table-visual.js';
 import { cueElevation, cuePose, CUE_IDLE_GAP, CUE_DRAW } from './cue-pose.js';
 
@@ -22,9 +22,9 @@ function ballTexture(id) {
       return;
     }
     for (const x of [w / 4, w * 3 / 4]) {
-      ctx.beginPath(); ctx.ellipse(x, h / 2, 60, 61, 0, 0, Math.PI * 2);
+      ctx.beginPath(); ctx.ellipse(x, h / 2, 84, 85, 0, 0, Math.PI * 2);
       ctx.fillStyle = '#fffdf0'; ctx.fill();
-      ctx.fillStyle = '#111820'; ctx.font = '600 80px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#111820'; ctx.font = 'bold 116px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText(String(id), x, h / 2 + 5);
     }
   });
@@ -44,7 +44,7 @@ export class PoolScene {
     this.renderer.shadowMap.autoUpdate = false;
     this.renderer.shadowMap.needsUpdate = true;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping; this.renderer.toneMappingExposure = 1.05;
-    this.renderer.domElement.setAttribute('aria-label', 'Bàn bida 3D. Chạm để ngắm, kéo để xoay góc nhìn.');
+    this.renderer.domElement.setAttribute('aria-label', 'Bàn bida 3D. Chạm để ngắm. Chuột phải xoay ở góc 3D.');
     container.appendChild(this.renderer.domElement);
     const pmrem = new THREE.PMREMGenerator(this.renderer), environment = new RoomEnvironment();
     const reflectionPanel = new THREE.Mesh(new THREE.PlaneGeometry(7, 1.4), new THREE.MeshBasicMaterial({ color: new THREE.Color(7, 7, 7), side: THREE.DoubleSide }));
@@ -64,7 +64,9 @@ export class PoolScene {
     this.controls.enableDamping = true; this.controls.dampingFactor = 0.075;
     this.controls.enablePan = false; this.controls.minDistance = 3; this.controls.maxDistance = 28;
     this.controls.minPolarAngle = 0.01; this.controls.maxPolarAngle = Math.PI * 0.44;
-    this.controls.rotateSpeed = 0.45;
+    this.controls.rotateSpeed = 0.18;
+    this.controls.mouseButtons.LEFT=null;this.controls.mouseButtons.RIGHT=THREE.MOUSE.ROTATE;
+    this.controls.touches.ONE=null;
     this.buildRoom();
     const materials = buildTournamentTable(this.scene, this.renderer);
     this.feltMaterial = materials.felt; this.cushionMaterial = materials.cushion;
@@ -91,7 +93,7 @@ export class PoolScene {
     const geometry = new THREE.SphereGeometry(RADIUS, 48, 32);
     for (let id = 0; id <= 15; id++) {
       const map = ballTexture(id); map.anisotropy = this.renderer.capabilities.getMaxAnisotropy();
-      const material = new THREE.MeshStandardMaterial({ map, roughness: id === 0 ? 0.32 : 0.28, metalness: 0, envMap: this.ballEnvironmentTarget.texture, envMapIntensity: id === 0 ? 0.45 : 0.55 });
+      const material = new THREE.MeshStandardMaterial({ map, roughness: id === 0 ? 0.35 : 0.32, metalness: 0, envMap: this.ballEnvironmentTarget.texture, envMapIntensity: id === 0 ? 0.45 : 0.55 });
       const ball = new THREE.Mesh(geometry, material); ball.rotation.set(0.4, -0.7, 0.4);
       ball.castShadow = false; ball.receiveShadow = false; this.scene.add(ball); this.ballMeshes.set(id, ball);
       // No separate moving shadow disc: lighting on the sphere supplies its volume.
@@ -111,6 +113,12 @@ export class PoolScene {
     this.scene.add(this.cue);
   }
   buildGuide() {
+    this.pocketLabels = new THREE.Group();this.pocketLabels.visible=false;
+    POCKET_DETAILS.forEach((p,i)=>{
+      const map=texture(64,64,(ctx)=>{ctx.fillStyle='#e9dcc3';ctx.font='bold 42px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(String(i+1),32,32);});
+      const label=new THREE.Sprite(new THREE.SpriteMaterial({map,depthTest:false,transparent:true}));
+      label.position.set(p.x,Y+.32,p.z);label.scale.set(.18,.18,1);this.pocketLabels.add(label);
+    });this.scene.add(this.pocketLabels);
     this.guide = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]), new THREE.LineDashedMaterial({ color: '#f1f4eb', dashSize: 0.075, gapSize: 0.085, transparent: true, opacity: 0.4 }));
     this.scene.add(this.guide);
     this.ghost = new THREE.Mesh(new THREE.RingGeometry(RADIUS * 0.98, RADIUS * 1.025, 80), new THREE.MeshBasicMaterial({ color: '#f5f4e7', transparent: true, opacity: 0.45, side: THREE.DoubleSide }));
@@ -128,21 +136,21 @@ export class PoolScene {
       const placement = this.placingCue;
       if (!placement) return;
       this.placingCue = null;
-      if (restore) { this.physics.placeCue(placement.startZ); this.angle = placement.startAngle; }
+      if (restore) { this.physics.placeCue(placement.startZ,placement.startX); this.angle = placement.startAngle; }
       this.controls.enabled = placement.controlsEnabled; this.inputLocked = false;
       if (element.hasPointerCapture(placement.id)) element.releasePointerCapture(placement.id);
       element.style.cursor = ''; this.guideKey = null; this.onPlacement?.();
     };
     // Capture before OrbitControls, so dragging the cue ball never rotates the table.
     element.addEventListener('pointerdown', event => {
-      if (!event.isPrimary || event.button !== 0 || this.inputLocked || this.striking || !this.physics.canPlaceCue) return;
+      if (!event.isPrimary || event.button !== 0 || this.inputLocked || this.striking || this.canInteract?.()===false || !this.physics.canPlaceCue) return;
       const b = this.physics.cueBall, center = this.project(b.x, b.z, Y + RADIUS);
       const edge = this.project(b.x, b.z + RADIUS, Y + RADIUS);
       const tolerance = Math.max(event.pointerType === 'touch' ? 22 : 14, Math.hypot(edge.x - center.x, edge.y - center.y) + 5);
       if (Math.hypot(event.clientX - center.x, event.clientY - center.y) > tolerance) return;
       const hit = tableHit(event); if (!hit) return;
       event.preventDefault(); event.stopImmediatePropagation(); down = null;
-      this.placingCue = { id: event.pointerId, startZ: b.z, startAngle: this.angle, offset: b.z - hit.z, controlsEnabled: this.controls.enabled };
+      this.placingCue = { id: event.pointerId, startZ: b.z, startX:b.x, startAngle: this.angle, offset: b.z - hit.z, offsetX:b.x-hit.x, controlsEnabled: this.controls.enabled };
       this.controls.enabled = false; this.inputLocked = true; element.setPointerCapture(event.pointerId);
       element.style.cursor = 'grabbing'; this.onPlacement?.();
     }, { capture: true });
@@ -150,7 +158,7 @@ export class PoolScene {
       if (!this.placingCue || event.pointerId !== this.placingCue.id) return;
       event.preventDefault(); event.stopImmediatePropagation();
       const hit = tableHit(event); if (!hit) return;
-      this.physics.placeCue(hit.z + this.placingCue.offset);
+      this.physics.placeCue(hit.z + this.placingCue.offset,hit.x+this.placingCue.offsetX);
       const b = this.physics.cueBall;
       this.angle = Math.atan2(-b.z, FOOT_SPOT_X - b.x); this.guideKey = null;
       this.onAim(this.angle);
@@ -166,7 +174,7 @@ export class PoolScene {
     element.addEventListener('pointerdown', e => { if (e.isPrimary && e.button === 0) down = { x: e.clientX, y: e.clientY }; });
     element.addEventListener('pointercancel', () => { down = null; });
     element.addEventListener('pointerup', e => {
-      if (!down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 6 || !this.physics.canShoot || this.inputLocked) { down = null; return; }
+      if (!down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 6 || !this.physics.canShoot || this.inputLocked || this.canInteract?.()===false) { down = null; return; }
       down = null;
       const rect = element.getBoundingClientRect();
       const point = new THREE.Vector2((e.clientX - rect.left) / rect.width * 2 - 1, -(e.clientY - rect.top) / rect.height * 2 + 1);
@@ -184,7 +192,7 @@ export class PoolScene {
     this.cushionMaterial.emissive.set(cloth);
   }
   setView(view) {
-    this.view = view;
+    this.view = view;this.controls.enableRotate=view==='orbit';
     // Clear damping inertia so a preset always lands at the same fitted camera.
     this.controls.enableDamping = false; this.controls.update();
     const area = this.playArea();
@@ -250,9 +258,10 @@ export class PoolScene {
   }
   animate(time) {
     const dt = Math.min((time - this.lastTime) / 1000, 0.06); this.lastTime = time;
+    if(this.suspended){this.frame=requestAnimationFrame(this.tick);return;}
     let motionDt = dt;
     const b = this.physics.cueBall;
-    let pull = this.power, showCue = this.physics.canShoot;
+    let pull = this.power, showCue = this.physics.canShoot && this.showCue!==false;
     if (this.striking) {
       const s = this.striking, elapsed = time - s.start;
       // One short, linear forward stroke; no slow-start spring-like easing.
@@ -281,7 +290,8 @@ export class PoolScene {
     }
     // Only the static table casts shadows. No moving cue/ball shadow or trail,
     // and no shadow-map rebuild during the stroke or rolling animation.
-    this.guide.visible = this.ghost.visible = this.physics.canShoot && this.aimVisible && !this.striking;
+    this.guide.visible = this.physics.canShoot && this.aimVisible && !this.striking && this.showCue!==false;
+    this.ghost.visible = this.guide.visible && this.ghostEnabled!==false;
     if (this.guide.visible) {
       const key = `${this.angle}:${b.x}:${b.z}:${this.physics.shots}`;
       if (key !== this.guideKey) { this.guideKey = key; this.guideTarget = this.physics.aimTarget(this.angle); }
@@ -291,6 +301,7 @@ export class PoolScene {
       positions.needsUpdate = true; this.guide.geometry.computeBoundingSphere(); this.guide.computeLineDistances();
       this.ghost.position.set(target.x, Y + 0.002, target.z);
     }
+
     this.controls.update(); this.renderer.render(this.scene, this.camera);
     this.frame = requestAnimationFrame(this.tick);
   }

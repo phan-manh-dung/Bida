@@ -1,0 +1,30 @@
+import {chromium} from 'playwright';
+import assert from 'node:assert/strict';
+const browser=await chromium.launch({channel:'chrome',headless:true});
+try{
+ const page=await browser.newPage({viewport:{width:1366,height:768}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto(process.env.BASE_URL||'http://127.0.0.1:5174/',{waitUntil:'networkidle'});
+ await page.locator('#ai-start').click();await page.locator('#start-match').click();await page.evaluate(()=>window.__noir.match.startRack(0));
+ assert.equal(await page.locator('.player-avatar').count(),2);assert.equal(await page.locator('.capture-slot').count(),18);
+ assert.equal(await page.locator('#scene').evaluate(e=>e.getBoundingClientRect().left),0);
+ await page.evaluate(()=>{const m=window.__noir.match;m.event({type:'shot'});m.event({type:'pocket',id:2,pocketIndex:0});m.notify();});
+ assert.equal(await page.locator('#human-score .filled').count(),1);assert.equal(await page.locator('#ai-score .filled').count(),0);
+ await page.evaluate(()=>{const m=window.__noir.match;m.turn=1;m.event({type:'shot'});m.event({type:'pocket',id:3,pocketIndex:0});m.onChange(m);});
+ assert.equal(await page.locator('#ai-score .filled').count(),1);
+ await page.screenshot({path:'artifacts/avatar-hud.png'});
+ await page.evaluate(()=>{const m=window.__noir.match;clearTimeout(m.timer);m.timer=null;m.spot(3);m.onChange(m);});
+ assert.equal(await page.locator('#ai-score .filled').count(),0);
+ await page.evaluate(()=>{const {match:m,physics:p}=window.__noir;m.startRack(0);m.breaking=false;p.hand=null;m.shootHuman(Math.PI,.06,{});for(let i=0;i<15000&&p.moving;i++)p.update(1/120);});
+ assert.equal(await page.locator('#game').evaluate(e=>e.classList.contains('foul-paused')),true);
+ assert.equal(await page.evaluate(()=>window.__noir.match.canHumanShoot),false);
+ await page.screenshot({path:'artifacts/avatar-foul.png'});await page.waitForTimeout(1000);
+ assert.equal(await page.evaluate(()=>window.__noir.match.foulNotice),true);
+ await page.waitForFunction(()=>!window.__noir.match.foulNotice);
+ assert.equal(await page.locator('#game').evaluate(e=>e.classList.contains('foul-paused')),false);
+ await page.evaluate(()=>{const m=window.__noir.match;m.startRack(0);clearTimeout(m.timer);m.timer=null;});
+ assert.equal(await page.locator('.filled').count(),0);
+ await page.setViewportSize({width:390,height:844});await page.screenshot({path:'artifacts/avatar-mobile.png'});
+ assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+ await page.evaluate(()=>window.__noir.goHome());assert.deepEqual(errors,[]);
+ console.log('PASS: per-player pocket ownership, respot/reset, avatars, centered table and red two-second locked foul overlay.');
+}finally{await browser.close();}

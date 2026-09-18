@@ -4,6 +4,7 @@ const browser=await chromium.launch({channel:'chrome',headless:true});
 try {
  const page=await browser.newPage({viewport:{width:1600,height:900}});
  await page.goto(process.env.BASE_URL||'http://127.0.0.1:5173/',{waitUntil:'networkidle'});
+  await page.locator('#practice-start').click();
  const result=await page.evaluate(async()=>{
   const {scene:s,physics:p}=window.__noir;
   const {RADIUS,UNITS_PER_MM}=await import('/src/table-model.js');

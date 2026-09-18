@@ -4,6 +4,7 @@ const browser=await chromium.launch({channel:'chrome',headless:true});
 try {
  const page=await browser.newPage({viewport:{width:1440,height:900}});
  await page.goto(process.env.BASE_URL || 'http://127.0.0.1:5173/',{waitUntil:'networkidle'});
+  await page.locator('#practice-start').click();
  const result=await page.evaluate(async()=>{
   const THREE=await import('/node_modules/three/build/three.module.js');
   const {cueElevation,cuePose}=await import('/src/cue-pose.js');

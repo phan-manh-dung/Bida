@@ -1,4 +1,4 @@
-import { HALF_X, HALF_Z, RADIUS, CUSHION_SEGMENTS, POCKET_DETAILS, pocketCoordinates, pocketPoint, closestPoint, BREAK_CUE_X, FOOT_SPOT_X } from './table-model.js';
+import { HALF_X, HALF_Z, RADIUS, CUSHION_SEGMENTS, POCKET_DETAILS, pocketCoordinates, pocketPoint, closestPoint, BREAK_CUE_X, FOOT_SPOT_X, HEAD_STRING_X } from './table-model.js';
 export { HALF_X, HALF_Z, RADIUS, POCKETS } from './table-model.js';
 export const BALL_COLORS = ['#fffdf4', '#f4b900', '#124cbd', '#b61b25', '#66268b', '#e65509', '#006844', '#711824', '#080b10', '#f4b900', '#124cbd', '#b61b25', '#66268b', '#e65509', '#006844', '#711824'];
 export const STEP = 1 / 360;
@@ -61,7 +61,7 @@ export function createRack(layout = 'rack') {
 
 // Slip velocity at the cloth is v + omega x (0, -R, 0).
 // I = 2/5 mR²: sliding friction changes both translation and angular velocity.
-export function clothMotion(b, dt) {
+export function clothMotion(b, dt, rollingFriction = ROLLING_FRICTION) {
   const ux = b.vx + RADIUS * b.wz, uz = b.vz - RADIUS * b.wx;
   const slip = Math.hypot(ux, uz);
   let remaining = dt;
@@ -79,7 +79,7 @@ export function clothMotion(b, dt) {
   if (remaining > 1e-10) {
     const speed = Math.hypot(b.vx, b.vz);
     if (speed > STOP_SPEED) {
-      const a = ROLLING_FRICTION * GRAVITY;
+      const a = rollingFriction * GRAVITY;
       const duration = Math.min(remaining, speed / a);
       const next = Math.max(0, speed - a * duration);
       const distance = (speed + next) * 0.5 * duration;
@@ -96,20 +96,34 @@ export class PoolPhysics {
     this.balls = createRack(layout); this.moving = false; this.accumulator = 0;
     this.shots = 0; this.scratch = false; this.layout = layout; this.breakPending = false;
     this.contacts = new Set(); this.nextContacts = new Set();
+    this.hand=null;this.autoRespot=true;this.rollingFriction=ROLLING_FRICTION;
+    this.frozenRails=new Set();
   }
   get cueBall() { return this.balls.find(b => b.id === 0); }
   get canShoot() { return !this.moving && !this.cueBall.pocketed && this.balls.some(b => b.id && !b.pocketed); }
-  get canPlaceCue() { return this.layout === 'rack' && this.shots === 0 && this.canShoot; }
-  placeCue(z) {
+  get canPlaceCue() { return !!this.hand && !this.moving || this.layout === 'rack' && this.shots === 0 && this.canShoot; }
+  placeCue(z, x = null) {
     if (!this.canPlaceCue || !Number.isFinite(z)) return false;
     const clamped = Math.max(-HALF_Z + RADIUS + 0.02, Math.min(HALF_Z - RADIUS - 0.02, z));
-    Object.assign(this.cueBall, { x: BREAK_CUE_X, px: BREAK_CUE_X, z: clamped, pz: clamped });
+    let placedX=BREAK_CUE_X;
+    if(this.hand){
+      if(!Number.isFinite(x))x=this.cueBall.x;
+      placedX=Math.max(-HALF_X+RADIUS+.005,Math.min(this.hand==='kitchen'?HEAD_STRING_X-.001:HALF_X-RADIUS-.005,x));
+      if(this.balls.some(b=>b.id&&!b.pocketed&&Math.hypot(b.x-placedX,b.z-clamped)<RADIUS*2+.002))return false;
+      if(CUSHION_SEGMENTS.some(s=>{const [cx,cz]=closestPoint(s,placedX,clamped);return Math.hypot(cx-placedX,cz-clamped)<RADIUS;}))return false;
+      if(POCKET_DETAILS.some(p=>{const local=pocketCoordinates(p,placedX,clamped);return local.depth>p.front&&Math.abs(local.lateral)<p.width;}))return false;
+    }
+    Object.assign(this.cueBall, { x: placedX, px: placedX, z: clamped, pz: clamped,y:RADIUS,py:RADIUS,pocketed:false,falling:false });
     return true;
   }
   shoot(angle, power) {
     if (!this.canShoot || !Number.isFinite(angle) || !Number.isFinite(power) || power < 0.025) return false;
     const speed = shotSpeed(power);
     this.breakPending = this.layout === 'rack' && this.shots === 0;
+    this.frozenRails.clear();
+    for(const b of this.balls)if(!b.pocketed)CUSHION_SEGMENTS.forEach((s,i)=>{
+      const [x,z]=closestPoint(s,b.x,b.z);if(Math.hypot(x-b.x,z-b.z)<=RADIUS+.0001)this.frozenRails.add(b.id*32+i);
+    });
     Object.assign(this.cueBall, { vx: Math.cos(angle) * speed, vz: Math.sin(angle) * speed, wx: 0, wz: 0 });
     this.moving = true; this.shots++; this.scratch = false;
     this.onEvent({ type: 'shot', speed, x: this.cueBall.x, z: this.cueBall.z });
@@ -122,7 +136,7 @@ export class PoolPhysics {
     if (!this.balls.some(b => b.falling || (!b.pocketed && (Math.hypot(b.vx, b.vz) > STOP_SPEED || Math.hypot(b.wx, b.wz) * RADIUS > STOP_SPEED)))) {
       this.moving = false; this.accumulator = 0;
       for (const b of this.balls) { b.vx = b.vz = b.wx = b.wz = 0; b.px = b.x; b.pz = b.z; b.py = b.y; b.pqx=b.qx;b.pqy=b.qy;b.pqz=b.qz;b.pqw=b.qw; }
-      if (this.cueBall.pocketed) this.respotCue();
+      if (this.cueBall.pocketed && this.autoRespot) this.respotCue();
       this.onEvent({ type: 'settled', scratch: this.scratch });
     }
   }
@@ -145,6 +159,7 @@ export class PoolPhysics {
   }
   substep(dt) {
     for (const b of this.balls) {
+      const startX=b.x,startZ=b.z;
       const oldWx = b.wx, oldWz = b.wz;
       if (b.falling) {
         b.vy -= GRAVITY * dt; b.y += b.vy * dt;
@@ -153,7 +168,9 @@ export class PoolPhysics {
         const t = 1 - Math.exp(-12 * dt);
         b.x += (target[0] - b.x) * t; b.z += (target[1] - b.z) * t;
         if (b.y < -0.6) { b.falling = false; b.vx = b.vz = b.wx = b.wz = 0; }
-      } else if (!b.pocketed && (b.vx || b.vz || b.wx || b.wz)) clothMotion(b, dt);
+      } else if (!b.pocketed && (b.vx || b.vz || b.wx || b.wz)) clothMotion(b, dt, this.rollingFriction);
+      if((startX-HEAD_STRING_X)*(b.x-HEAD_STRING_X)<0)this.onEvent({type:'head-cross',id:b.id,forward:b.x>startX});
+      if(startZ*b.z<0)this.onEvent({type:'center-cross',id:b.id});
       integrateRotation(b, (oldWx + b.wx) * 0.5, (oldWz + b.wz) * 0.5, dt);
     }
     const active = this.balls.filter(b => !b.pocketed);
@@ -168,6 +185,7 @@ export class PoolPhysics {
       const relative = (a.vx - b.vx) * nx + (a.vz - b.vz) * nz;
       const key=Math.min(a.id,b.id)*16+Math.max(a.id,b.id);
       contacts.add(key);
+      if(relative>1e-6&&!this.contacts.has(key))this.onEvent({type:'contact',a:a.id,b:b.id});
       {
         const impulse = Math.max(0, CONTACT_STIFFNESS*(2*RADIUS-dist)+CONTACT_DAMPING*relative)*dt;
         a.dvx -= impulse * nx; a.dvz -= impulse * nz;
@@ -181,10 +199,13 @@ export class PoolPhysics {
     }
     this.nextContacts=this.contacts; this.contacts=contacts;
     for (const b of active) { b.vx+=b.dvx; b.vz+=b.dvz; }
+    for(const key of this.frozenRails){const b=this.balls.find(b=>b.id===Math.floor(key/32)),s=CUSHION_SEGMENTS[key%32];
+      const [x,z]=closestPoint(s,b.x,b.z);if(Math.hypot(x-b.x,z-b.z)>RADIUS+.0005)this.frozenRails.delete(key);
+    }
     for (const b of active) {
       // Interior balls cannot hit a rail or reach a pocket this substep.
       if(Math.abs(b.x)<HALF_X-RADIUS && Math.abs(b.z)<HALF_Z-RADIUS) continue;
-      for (const segment of CUSHION_SEGMENTS) {
+      for (const [segmentIndex,segment] of CUSHION_SEGMENTS.entries()) {
         const [x, z] = closestPoint(segment, b.x, b.z);
         const distance = Math.hypot(b.x - x, b.z - z);
         if (distance >= RADIUS) continue;
@@ -200,7 +221,7 @@ export class PoolPhysics {
           // Raised cushion nose partly redirects roll; the cloth resolves residual slip.
           b.wx = b.wx * 0.45 + b.vz / RADIUS * 0.55;
           b.wz = b.wz * 0.45 - b.vx / RADIUS * 0.55;
-          if (-vn > 0.045) this.onEvent({ type: 'cushion', speed: -vn, x, z, jaw: segment.jaw });
+          if (-vn > 1e-6) this.onEvent({ type: 'cushion', id:b.id, fresh:!this.frozenRails.has(b.id*32+segmentIndex), speed: -vn, x, z, jaw: segment.jaw, inward:segment.inward });
         }
       }
       for (let i = 0; i < POCKET_DETAILS.length; i++) {
@@ -209,9 +230,12 @@ export class PoolPhysics {
           const speed = Math.hypot(b.vx, b.vz);
           b.pocketed = b.falling = true; b.pocketIndex = i; b.vy = 0;
           if (!b.id) this.scratch = true;
-          this.onEvent({ type: 'pocket', id: b.id, speed, x: b.x, z: b.z });
+          this.onEvent({ type: 'pocket', id: b.id, pocketIndex:i, speed, x: b.x, z: b.z });
           break;
         }
+      }
+      if(!b.pocketed&&(Math.abs(b.x)>HALF_X+.8||Math.abs(b.z)>HALF_Z+.8)){
+        b.pocketed=true;b.vx=b.vz=b.wx=b.wz=0;this.onEvent({type:'off-table',id:b.id});
       }
     }
   }

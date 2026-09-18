@@ -1,6 +1,19 @@
 # NOIR — Billiards Club
 
-Web bida 3D luyện tập một người, giao diện tiếng Việt. Bản 09 giảm lực kéo tổng thể, bỏ bóng động của cơ và kiểm tra tỷ lệ bi 57,2 mm trên mặt chơi 254 × 127 cm. Xem [cơ sở kỹ thuật](RESEARCH.md).
+Web bida 3D tiếng Việt với trang chủ, chơi với máy và tập luyện. Bi 57,2 mm trên mặt chơi 254 × 127 cm. Xem [cơ sở kỹ thuật và nguồn luật](RESEARCH.md).
+
+## Trang chủ và chơi với máy
+
+- Trang chủ có Chơi với máy, Chơi online (chưa triển khai), Tập luyện; cài đặt và trợ giúp ở góc dưới.
+- Chọn hạng máy I–H–G–F–E–D–C–B–A–Chuyên nghiệp, đối thủ, tên người chơi, mục tiêu chạm 1–100 ván, bàn và công cụ hỗ trợ.
+- 15 bi dùng luật 8-ball trơn/sọc, gọi bi và lỗ trước cú đánh, bi 8 cuối cùng. Xếp tam giác với bi 8 giữa và hai góc cuối khác nhóm.
+- 9-ball có kiểu WPA hiện hành (bi 9 trên điểm cuối bàn) và truyền thống (bi 1 trên điểm); đánh bi nhỏ nhất trước, có push-out và xử lý ba lỗi liên tiếp. Kiểu WPA áp dụng điều kiện phá ba bi.
+- Hai bên thi băng đầu trận; người thắng chọn phá hoặc nhường. Các ván sau luân phiên phá. Khi phạm lỗi, giao diện hướng dẫn đặt bi hoặc chọn cách tiếp tục phù hợp.
+- Club, Novice, Tournament hiện khác tốc độ nỉ; cùng kích thước mặt chơi 9 feet. Hỗ trợ đường ngắm và ghost ball; đã bỏ camera theo bi.
+
+Mặc định vào bàn bằng góc nhìn từ trên. Chuột trái dùng ngắm/đặt bi; chỉ xoay bằng chuột phải ở góc 3D, tốc độ xoay thấp. 9-ball có hàng trạng thái 9 bi và tự hướng cơ tới bi nhỏ nhất sau cú đánh. Bảng trên có avatar và 9 ô bi riêng cho mỗi người; bi vào lỗ xuất hiện dưới người đánh, bi đặt lại được xóa khỏi hàng. Thông báo chữ đỏ dưới khung người chơi làm mờ bàn trong 2 giây, khóa lượt cho tới khi thông báo tắt. Không còn cột bên trái. Dấu cuối bàn dài hơn và khu vực bếp có thêm hai vạch dọc mờ. Số được in lớn hơn trên texture và quay cùng bi; đã bỏ nhãn số đứng yên theo camera và thanh chỉnh hướng cơ. Không đổi kích thước vật lý.
+
+Máy dùng tính toán đường đánh và sai số theo hạng, chưa phải mô phỏng trình độ vận động viên chuyên nghiệp. Luật áp dụng cho thao tác mà game hỗ trợ; chưa có nhảy bi, trọng tài xử lý hành vi ngoài cú đánh hoặc phân xử ván bế tắc. Trận đấu chưa lưu khi tải lại trang.
 
 ## Chạy
 
@@ -29,14 +42,16 @@ npm run preview
 - Trước cú phá đầu tiên, giữ/kéo trực tiếp bi trắng sang hai bên dọc vạch bếp. Escape hoặc hủy cảm ứng trả về chỗ cũ. Sau cú đầu, chức năng đặt bi này khóa lại.
 - Kéo cây cơ ở mép phải **từ trên xuống**, thả để đánh. Khoảng kéo quyết định lực.
 - Kéo về vị trí ban đầu hoặc nhấn Escape để hủy. Mất tiêu điểm/cảm ứng bị hủy không tạo cú đánh.
-- Kéo trên bàn để xoay, cuộn hoặc chụm hai ngón để thu phóng.
+- Ở góc 3D, giữ chuột phải để xoay; cuộn hoặc chụm hai ngón để thu phóng.
 - Ba nút dưới bên phải: 3D, từ trên, theo cơ.
-- Nút dưới trái mở menu: thống kê, ván mới, cách chơi, toàn màn hình.
-- Nút trên phải mở tùy chọn: màu nỉ, đường ngắm, ngắm tinh và âm thanh.
+- Nút dưới trái mở menu: ván mới, cách chơi, toàn màn hình.
+- Nút trên phải mở tùy chọn: màu nỉ, đường ngắm và âm thanh.
 - ←/→ chỉnh hướng, Shift để chỉnh nhỏ. Space giữ để lấy lực rồi thả để đánh.
 - Khi cây cơ được chọn bằng Tab: ↓/↑ chỉnh lực, Enter đánh, Home/Escape hủy.
 
-Đưa 15 bi vào lỗ theo thứ tự bất kỳ. Bi trắng vào lỗ được đặt lại sau khi bi dừng. Khi mở trò chơi hoặc bắt đầu ván mới, 15 bi xếp tam giác ở đầu bàn đối diện; bi đầu trên dấu chữ thập, bi 8 ở giữa, hai góc cuối khác nhóm. Tâm bi trắng nằm trên vạch bếp. Vạch bếp và dấu chữ thập được vẽ mờ. Màu bàn/đường ngắm được lưu trên thiết bị; ván chơi không được lưu khi tải lại. Đây vẫn là chế độ luyện tập, chưa áp dụng toàn bộ luật 8-ball.
+Trong **Tập luyện**, đưa 15 bi vào lỗ theo thứ tự bất kỳ; bi trắng vào lỗ được đặt lại sau khi bi dừng. Bi trắng có thể kéo sang hai bên vạch bếp trước cú phá. Trong **Chơi với máy**, theo hướng dẫn lượt đánh, gọi lỗ và đặt bi trên bảng trận đấu. Màu bàn/đường ngắm được lưu trên thiết bị.
+
+Kiểm tra: `npm test`, `npm run test:homepage`, `npm run test:match-browser`, `npm run test:browser` (cần máy chủ ở cổng 5173 và Chrome).
 
 ## Các thay đổi của bản 09
 

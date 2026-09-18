@@ -1,0 +1,41 @@
+import {chromium} from 'playwright';
+import assert from 'node:assert/strict';
+const browser=await chromium.launch({channel:'chrome',headless:true});
+try{
+ const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto(process.env.BASE_URL||'http://127.0.0.1:5173/',{waitUntil:'networkidle'});
+ await page.screenshot({path:'artifacts/homepage.png'});
+ assert.equal(await page.locator('#lobby').isVisible(),true);assert.equal(await page.locator('#game').isVisible(),false);
+ await page.locator('#home-settings').click();assert.equal(await page.locator('#settings-dialog').isVisible(),true);await page.keyboard.press('Escape');
+ await page.locator('#ai-start').click();await page.locator('#ai-level').selectOption('B');assert.equal(await page.locator('#ai-opponent option').count(),4);
+ await page.locator('#game-type').selectOption('8');assert.equal(await page.locator('#rack-type option').count(),1);
+ await page.locator('#race-target').fill('0');await page.locator('#start-match').click();assert.equal(await page.locator('#lobby').isVisible(),true);
+ await page.locator('#race-target').fill('5');await page.locator('#player-name').fill('Dung');
+ await page.screenshot({path:'artifacts/setup-eight.png'});
+ await page.locator('#game-type').selectOption('9');await page.locator('#ai-level').selectOption('I');assert.equal(await page.locator('#ai-opponent option').count(),3);
+ await page.screenshot({path:'artifacts/setup-nine.png'});
+ await page.locator('#start-match').click();await page.waitForFunction(()=>window.__noir.match?.phase==='lag-ready');
+ assert.equal(await page.locator('#lobby').isVisible(),false);
+ assert.equal(await page.evaluate(()=>window.__noir.physics.balls.filter(b=>!b.pocketed).length),2);
+ await page.screenshot({path:'artifacts/lag-ready.png'});
+ const lag=await page.evaluate(()=>{
+  const{match:m,scene:s,physics:p}=window.__noir;cancelAnimationFrame(s.frame);
+  m.shootHuman(0,m.aiLagPower*.97,null);
+  for(let i=0;i<2400&&p.moving;i++)p.update(1/120);
+  clearTimeout(m.timer);m.timer=null;
+  return {phase:m.phase,winner:m.lagWinner,records:m.lagRecords};
+ });
+ assert.equal(lag.phase,'lag-choice',JSON.stringify(lag));
+ await page.evaluate(()=>{const{match:m,scene:s}=window.__noir;m.choose('take');clearTimeout(m.timer);m.timer=null;s.syncBalls(0);s.lastTime=performance.now();s.frame=requestAnimationFrame(s.tick);});
+ assert.equal(await page.evaluate(()=>window.__noir.physics.balls.filter(b=>!b.pocketed&&b.id).length),9);
+ assert.equal(await page.evaluate(()=>window.__noir.match.config.target),5);
+ await page.screenshot({path:'artifacts/match-nine.png'});
+ await page.evaluate(()=>window.__noir.goHome());
+ await page.setViewportSize({width:390,height:844});await page.screenshot({path:'artifacts/homepage-mobile.png'});
+ await page.locator('#ai-start').click();await page.screenshot({path:'artifacts/setup-mobile.png'});
+ assert.equal(await page.locator('#lobby').evaluate(el=>el.scrollWidth<=el.clientWidth+1),true);
+ await page.locator('#setup-back').click();await page.locator('#practice-start').click();
+ assert.equal(await page.evaluate(()=>window.__noir.physics.balls.filter(b=>!b.pocketed).length),16);
+ assert.equal(await page.evaluate(()=>window.__noir.match),null);
+ assert.deepEqual(errors,[]);console.log('PASS: home/setup validation, rosters, 8/9 racks, actual simultaneous lag, match entry, mobile, practice and no JS errors.');
+}finally{await browser.close();}

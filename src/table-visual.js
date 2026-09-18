@@ -176,7 +176,7 @@ export function buildTournamentTable(scene, renderer) {
   cloth.rotation.x = -Math.PI / 2; cloth.castShadow = false; cloth.receiveShadow = false;
   const markingMaterial = new THREE.MeshBasicMaterial({ color: '#e0e5dc', transparent: true, opacity: 0.17, depthWrite: false });
   const markings = new THREE.Group(); markings.name = 'table-markings';
-  for (const [x, z, width, length] of [[HEAD_STRING_X, 0, 0.009, Z * 2], [FOOT_SPOT_X, 0, 0.22, 0.009], [FOOT_SPOT_X, 0, 0.009, 0.22]]) {
+  for (const [x, z, width, length] of [[HEAD_STRING_X, 0, 0.009, Z * 2], [FOOT_SPOT_X + 0.07, 0, 0.52, 0.009], [FOOT_SPOT_X, 0, 0.009, 0.34], [(HEAD_STRING_X-X)/2, -Z/2, X+HEAD_STRING_X, 0.009], [(HEAD_STRING_X-X)/2, Z/2, X+HEAD_STRING_X, 0.009]]) {
     const mark = new THREE.Mesh(new THREE.PlaneGeometry(width, length), markingMaterial);
     mark.rotation.x = -Math.PI / 2; mark.position.set(x, Y + 0.002, z); markings.add(mark);
   }

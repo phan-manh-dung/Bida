@@ -5,6 +5,7 @@ const browser = await chromium.launch({ channel: 'chrome', headless: true });
 try {
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
   await page.goto(process.env.BASE_URL || 'http://127.0.0.1:5173/', { waitUntil: 'networkidle' });
+  await page.locator('#practice-start').click();
   await page.waitForFunction(() => !!window.__noir?.scene);
   await page.screenshot({ path: 'artifacts/desktop-v2.png' });
   await page.evaluate(() => {

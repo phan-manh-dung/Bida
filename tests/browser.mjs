@@ -11,6 +11,7 @@ try {
   page.on('pageerror', e => errors.push(e.message));
   page.on('console', msg => { if (msg.type() === 'error') errors.push(msg.text()); });
   await page.goto(baseURL, { waitUntil: 'networkidle' });
+  await page.locator('#practice-start').click();
   await page.waitForFunction(() => window.__noir?.scene && !document.querySelector('#loading'));
   await page.screenshot({ path: 'artifacts/desktop-v2.png' });
   assert.equal(await page.locator('dialog[open]').count(), 0);
@@ -78,6 +79,7 @@ try {
   await page.locator('[data-cloth="wine"]').click(); await page.locator('#guide').uncheck();
   await page.screenshot({ path: 'artifacts/options-v2.png' });
   await page.keyboard.press('Escape'); await page.reload({ waitUntil: 'networkidle' });
+  await page.locator('#practice-start').click();
   await page.locator('#settings-toggle').click();
   assert.equal(await page.locator('[data-cloth="wine"]').getAttribute('aria-pressed'), 'true');
   assert.equal(await page.locator('#guide').isChecked(), false);
@@ -125,6 +127,7 @@ try {
   const mobile = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 1 });
   const touchPage = await mobile.newPage(); touchPage.on('pageerror', e => errors.push(e.message));
   await touchPage.goto(baseURL, { waitUntil: 'networkidle' });
+  await touchPage.locator('#practice-start').click();
   await touchPage.waitForFunction(() => !!window.__noir?.scene);
   await touchPage.evaluate(()=>{const {physics,scene}=window.__noir;physics.reset('practice');scene.angle=-.281;scene.syncBalls(0);});
   const touchTarget = await touchPage.evaluate(() => window.__noir.scene.project(1,0.5));

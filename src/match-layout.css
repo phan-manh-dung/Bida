@@ -1,0 +1,22 @@
+#game.match-layout #scene{left:0;top:142px;bottom:0}
+#game.match-layout #match-hud{inset:0;transform:none;width:auto;text-align:left}
+.match-header{position:absolute;left:50%;transform:translateX(-50%);top:10px;width:min(900px,calc(100% - 180px));height:90px;display:grid;grid-template-columns:1fr 76px 1fr;align-items:center;gap:18px;border-bottom:1px solid #ffffff15;padding-bottom:10px}
+.player-card{display:grid;grid-template-columns:48px 1fr 28px;grid-template-rows:48px 22px;gap:8px 12px;align-items:center;min-width:0}
+.player-avatar{width:48px;height:48px;border:2px solid #ffffff28;border-radius:12px;overflow:hidden}.player-avatar svg{display:block;width:100%;height:100%}.your-turn .player-avatar{border-color:#d7c07c;box-shadow:0 0 0 2px #d7c07c24}
+.player-info{min-width:0;display:flex;flex-direction:column;gap:5px}.player-info .score-name{font-size:13px;font-weight:600}.player-info small{font-size:10px;color:#a0aab2}.player-score{font-size:24px;color:#dbd2b9}.score-target{text-align:center;font-size:10px;letter-spacing:1px;color:#b8b4a4}
+.player-balls{grid-column:1/-1;display:flex;gap:7px;align-items:center;min-height:22px}.capture-slot{width:22px;height:22px;flex:0 0 22px;border-radius:50%;border:1px solid #69518b;background:#281b39;box-shadow:inset 0 2px 4px #0004}.capture-slot.filled{border:0;background:radial-gradient(circle at 30% 20%,#ffffff65,transparent 55%),var(--ball)}.capture-slot.hud-ball span{width:14px;height:14px;font:bold 10px/14px Arial}
+.match-sidebar{position:absolute;top:105px;left:50%;transform:translateX(-50%);width:min(860px,calc(100% - 180px));display:flex;align-items:center;justify-content:center;gap:10px;pointer-events:auto}
+.match-sidebar #match-status{margin:0;background:none;padding:4px 8px;font-size:12px;line-height:1.5;color:#b6c2ca}.match-sidebar #push-call{margin:0;padding:5px 9px;font-size:11px;width:auto;white-space:nowrap}.push-help{display:none}
+.match-sidebar #match-decisions{gap:5px;flex-wrap:wrap}.match-sidebar .match-action{padding:6px 10px;font-size:11px}.match-sidebar #shot-call{margin:0;padding:5px;font-size:10px;gap:5px}.match-sidebar #shot-call select{max-width:110px}
+#game.foul-paused #scene{filter:blur(2px) brightness(.48)}
+#game.foul-paused .cue-control{opacity:.15}
+.match-sidebar #match-status.is-foul{color:#ff6969!important;background:#171c24c9!important;border:1px solid #d34d4d55!important;font-size:17px!important;font-weight:600;padding:10px 18px;box-shadow:none!important;text-align:center;backdrop-filter:blur(8px)}
+.foul-paused .match-sidebar{z-index:3}.foul-paused #match-decisions,.foul-paused #shot-call,.foul-paused #push-call{display:none!important}
+@media(max-width:700px){
+ .match-header{width:calc(100% - 88px);left:12px;transform:none;grid-template-columns:1fr 38px 1fr;gap:7px;height:92px}
+ .player-card{grid-template-columns:32px 1fr 16px;grid-template-rows:40px 16px;gap:6px 5px}.player-avatar{width:32px;height:36px;border-radius:8px}.player-info .score-name{font-size:10px}.player-info small{font-size:8px}.player-score{font-size:17px}.score-target{font-size:8px;letter-spacing:0}
+ .player-balls{gap:2px;flex-wrap:wrap}.capture-slot{width:10px;height:10px;flex-basis:10px}.capture-slot.hud-ball{width:10px!important;height:10px!important}.capture-slot.hud-ball span{width:10px!important;height:10px!important;font-size:8px!important;line-height:10px!important}
+ .match-sidebar{left:12px;transform:none;width:calc(100% - 88px);top:108px;flex-wrap:wrap;gap:4px}.match-sidebar #match-status{font-size:10px;padding:0 3px}.match-sidebar #match-status.is-foul{font-size:14px!important;padding:8px}
+ #game.match-layout #scene{top:176px}.match-sidebar #shot-call{flex-wrap:wrap}.match-sidebar #shot-call select{max-width:80px}
+}
+@media(max-height:500px) and (min-width:701px){.match-header{top:5px;height:78px}.match-sidebar{top:86px}#game.match-layout #scene{top:120px}}

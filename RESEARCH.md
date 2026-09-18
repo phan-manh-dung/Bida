@@ -1,4 +1,14 @@
-# Cơ sở kỹ thuật — bản 09
+# Cơ sở kỹ thuật
+
+## Homepage, thi băng và luật trận đấu
+
+Nguồn chính: [WPA Rules of Play, bản 02/01/2026](https://www.wpapool.com/wp-content/uploads/2026/01/2026.01.02-WPA-Rules.pdf), các mục thi băng, lỗi chung, 8-ball và 9-ball. Triển khai xếp bi, bi đầu hợp lệ, yêu cầu chạm băng sau tiếp xúc, lỗi bi cái, gọi lỗ 8-ball, đặt lại bi 8/9 trong các trường hợp tương ứng, quyền chọn sau phá lỗi và push-out. Thi băng kiểm tra băng cuối đúng một lần, không chạm băng bên, không sang nửa bàn đối phương và so khoảng cách tới băng đầu.
+
+[WPA Playing Regulations, mục 16](https://wpapool.com/wp-content/uploads/2025/10/2025.09.15-WPA-Regs-NP.pdf) quy định điều kiện phá ba bi: đếm hợp của các bi vào lỗ và các bi vượt vạch bếp, không đếm trùng. Khi không đạt, người nhận có quyền nhận bàn hoặc trả lượt; xử lý quyền push-out tương ứng. Chỉ bật điều kiện này với lựa chọn xếp bi WPA hiện hành. Kiểu truyền thống được ghi nhãn riêng và dùng bi 1 trên điểm cuối bàn.
+
+AI tìm đường bi tới lỗ qua điểm ghost, loại đường bị chắn, cân nhắc góc cắt và khoảng cách, rồi thêm sai số theo hạng. Đây là AI hình học, chưa dùng tìm kiếm nhiều lượt hay học máy. Hạng và tên đối thủ là cấu hình nội bộ của trò chơi. Ba loại bàn hiện thay hệ số ma sát lăn, không đổi kích thước bi hoặc mặt bàn.
+
+Kiểm thử gồm rack ngẫu nhiên, lỗi và thắng/thua, push-out, ba lỗi, thi băng, đặt bi, băng bị dính sẵn, chuyển lượt qua mô phỏng vật lý; trình duyệt kiểm tra desktop/mobile, máy thực sự đánh, kết thúc trận bằng kéo cơ và hủy máy khi về trang chủ.
 
 ## Lực, bóng và tỷ lệ ở bản 09
 

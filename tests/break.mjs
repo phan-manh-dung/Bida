@@ -6,6 +6,7 @@ try {
  const page=await browser.newPage({viewport:{width:1440,height:900}}),errors=[];
  page.on('pageerror',e=>errors.push(e.message));
  await page.goto(baseURL,{waitUntil:'networkidle'});
+  await page.locator('#practice-start').click();
  await page.waitForFunction(()=>window.__noir?.scene);
  assert.equal(await page.evaluate(()=>window.__noir.physics.layout),'rack');
  assert.equal(await page.evaluate(()=>window.__noir.scene.ballShadows.size),0);
@@ -38,7 +39,8 @@ try {
  assert.equal(await page.evaluate(()=>window.__noir.physics.cueBall.z),0);
  const mobile=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
  const touch=await mobile.newPage();touch.on('pageerror',e=>errors.push(e.message));
- await touch.goto(baseURL,{waitUntil:'networkidle'});await touch.waitForFunction(()=>window.__noir?.scene);
+ await touch.goto(baseURL,{waitUntil:'networkidle'});
+  await touch.locator('#practice-start').click();await touch.waitForFunction(()=>window.__noir?.scene);
  await touch.locator('[data-view="top"]').click();
  await touch.waitForTimeout(150);
  const points=await touch.evaluate(()=>{const {physics:p,scene:s}=window.__noir;return [0,.8].map(z=>s.project(p.cueBall.x,z,.134));});
