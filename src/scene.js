@@ -15,16 +15,24 @@ function ballTexture(id) {
     ctx.fillStyle = id > 8 ? '#fffef5' : BALL_COLORS[id]; ctx.fillRect(0, 0, w, h);
     if (id > 8) { ctx.fillStyle = BALL_COLORS[id]; ctx.fillRect(0, h * 0.27, w, h * 0.46); }
     if (!id) {
-      ctx.fillStyle = '#171a1c';
+      ctx.fillStyle = '#000000';
       for (const x of [0.125, 0.375, 0.625, 0.875]) {
-        ctx.beginPath(); ctx.ellipse(x * w, h / 2, 15, 15, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(x * w, h / 2, 28, 28, 0, 0, Math.PI * 2); ctx.fill();
       }
+      // UV bands become circular caps at the two poles of the sphere.
+      // Together with the four equatorial dots these mark six opposing directions.
+      ctx.fillRect(0, 0, w, 28);
+      ctx.fillRect(0, h - 28, w, 28);
       return;
     }
+    // Paint directly onto the sphere so the numbers roll with its physical rotation.
     for (const x of [w / 4, w * 3 / 4]) {
-      ctx.beginPath(); ctx.ellipse(x, h / 2, 84, 85, 0, 0, Math.PI * 2);
-      ctx.fillStyle = '#fffdf0'; ctx.fill();
-      ctx.fillStyle = '#111820'; ctx.font = 'bold 116px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.beginPath(); ctx.ellipse(x, h / 2, 102, 102, 0, 0, Math.PI * 2);
+      ctx.fillStyle = '#fffdf4'; ctx.fill();
+      ctx.fillStyle = '#10151b'; ctx.font = `bold ${id < 10 ? 144 : 126}px Arial`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.strokeStyle = '#10151b'; ctx.lineWidth = 3; ctx.lineJoin = 'round';
+      ctx.strokeText(String(id), x, h / 2 + 5);
       ctx.fillText(String(id), x, h / 2 + 5);
     }
   });
@@ -63,6 +71,9 @@ export class PoolScene {
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.controls.enableDamping = true; this.controls.dampingFactor = 0.075;
     this.controls.enablePan = false; this.controls.minDistance = 3; this.controls.maxDistance = 28;
+    this.controls.enableZoom = false;
+    this.controls.mouseButtons.MIDDLE = null;
+    this.controls.touches.TWO = null;
     this.controls.minPolarAngle = 0.01; this.controls.maxPolarAngle = Math.PI * 0.44;
     this.controls.rotateSpeed = 0.18;
     this.controls.mouseButtons.LEFT=null;this.controls.mouseButtons.RIGHT=THREE.MOUSE.ROTATE;
@@ -93,7 +104,9 @@ export class PoolScene {
     const geometry = new THREE.SphereGeometry(RADIUS, 48, 32);
     for (let id = 0; id <= 15; id++) {
       const map = ballTexture(id); map.anisotropy = this.renderer.capabilities.getMaxAnisotropy();
-      const material = new THREE.MeshStandardMaterial({ map, roughness: id === 0 ? 0.35 : 0.32, metalness: 0, envMap: this.ballEnvironmentTarget.texture, envMapIntensity: id === 0 ? 0.45 : 0.55 });
+      const material = id === 0
+        ? new THREE.MeshLambertMaterial({ map })
+        : new THREE.MeshStandardMaterial({ map, roughness: 0.46, metalness: 0, envMap: this.ballEnvironmentTarget.texture, envMapIntensity: 0.3 });
       const ball = new THREE.Mesh(geometry, material); ball.rotation.set(0.4, -0.7, 0.4);
       ball.castShadow = false; ball.receiveShadow = false; this.scene.add(ball); this.ballMeshes.set(id, ball);
       // No separate moving shadow disc: lighting on the sphere supplies its volume.
@@ -275,16 +288,17 @@ export class PoolScene {
       showCue = !s.hit;
       if (elapsed >= 80) this.striking = null;
     }
-    this.physics.update(motionDt); this.syncBalls(motionDt);
+    this.physics.update(motionDt);
+    showCue = showCue && !this.physics.moving;
     this.cue.visible = showCue;
     const origin = this.striking || b;
     const bridgeKey = `${origin.x}:${origin.z}:${this.angle}`;
     if (showCue && bridgeKey !== this.bridgeKey) {
       this.bridgeKey = bridgeKey;
-      this.cueElevation = cueElevation(origin, this.angle, RAIL_SURFACE_Y);
+      this.cueElevation = cueElevation(origin, this.angle, RAIL_SURFACE_Y, this.tip);
     }
     if (showCue) {
-      const pose = cuePose(origin, this.angle, pull, this.cueElevation);
+      const pose = cuePose(origin, this.angle, pull, this.cueElevation, this.tip);
       this.cue.position.fromArray(pose.position);
       this.cue.quaternion.setFromUnitVectors(CUE_AXIS, poseAxis.fromArray(pose.axis));
     }
@@ -302,7 +316,7 @@ export class PoolScene {
       this.ghost.position.set(target.x, Y + 0.002, target.z);
     }
 
-    this.controls.update(); this.renderer.render(this.scene, this.camera);
+    this.controls.update(); this.syncBalls(0); this.renderer.render(this.scene, this.camera);
     this.frame = requestAnimationFrame(this.tick);
   }
   project(x, z, y = Y) {

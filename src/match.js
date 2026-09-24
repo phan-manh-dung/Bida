@@ -3,6 +3,8 @@ import { chooseShot, lagPower } from './pool-ai.js';
 import { RADIUS, shotSpeed, HALF_X, HALF_Z } from './physics.js';
 import { FOOT_SPOT_X, HEAD_STRING_X } from './table-model.js';
 
+export const TURN_DURATION_MS = 60_000;
+
 export class PoolMatch {
   constructor(physics,scene,config,onChange=()=>{}){
     this.physics=physics;this.scene=scene;this.config=config;this.onChange=onChange;
@@ -13,21 +15,55 @@ export class PoolMatch {
   }
   get canHumanShoot(){return !this.disposed&&!this.foulNotice&&(this.phase==='lag-ready'||this.phase==='playing'&&this.turn===0)&&!this.physics.moving;}
   get targets(){return legalTargets(this.config.game,this.groups[this.turn],this.physics.balls.filter(b=>b.id&&!b.pocketed).map(b=>b.id),this.breaking);}
-  notify(){if(this.disposed)return;this.onChange(this);this.scheduleAI();}
+  notify(){if(this.disposed)return;this.syncTurnClock();this.onChange(this);this.scheduleAI();}
+  stopTurnClock(){clearTimeout(this.turnTimer);this.turnTimer=null;this.turnDeadline=null;this.clockKey=null;}
+  syncTurnClock(){
+    const ready=!this.foulNotice&&!this.physics.moving&&(this.phase==='lag-ready'||this.phase==='playing');
+    if(!ready){this.stopTurnClock();return;}
+    const key=`${this.rackNumber}:${this.phase}:${this.turn}:${this.physics.shots}`;
+    if(this.clockKey===key)return;
+    this.stopTurnClock();this.clockKey=key;this.turnDeadline=performance.now()+TURN_DURATION_MS;
+    this.turnTimer=setTimeout(()=>this.expireTurn(),TURN_DURATION_MS);
+  }
+  showFoulNotice(){
+    this.stopTurnClock();this.foulNotice=true;clearTimeout(this.noticeTimer);
+    this.noticeTimer=setTimeout(()=>{
+      this.foulNotice=false;this.noticeTimer=null;
+      if(this.phase==='playing')this.message='';
+      this.notify();
+    },2000);
+  }
+  expireTurn(){
+    if(this.disposed||!this.turnDeadline||this.physics.moving||this.foulNotice)return;
+    const remaining=this.turnDeadline-performance.now();
+    if(remaining>0){clearTimeout(this.turnTimer);this.turnTimer=setTimeout(()=>this.expireTurn(),remaining);return;}
+    this.stopTurnClock();clearTimeout(this.timer);this.timer=null;
+    this.scene.cancelPlacement?.();this.scene.striking=null;this.scene.power=0;this.pendingCall=null;
+    const reason='Hết thời gian đánh 60 giây';this.message=`Lỗi: ${reason}.`;
+    this.showFoulNotice();
+    if(this.phase==='lag-ready'){
+      this.lagWinner=1;this.phase='lag-choice';this.notify();return;
+    }
+    const shooter=this.turn;this.fouls[shooter]++;
+    if(this.config.game==='9'&&this.fouls[shooter]>=3){this.winRack(1-shooter,reason);return;}
+    this.turn=1-shooter;this.pushAvailable=false;
+    this.giveHand(this.breaking?'kitchen':'any');this.aimNextTarget();this.scene.syncBalls(0);this.notify();
+  }
   prepareLag(){
     const p=this.physics;p.reset('lag');p.autoRespot=false;p.rollingFriction=TABLES[this.config.table].friction;
     p.balls.forEach(b=>b.pocketed=b.id>1);
     for(let i=0;i<2;i++)Object.assign(p.balls[i],{x:HEAD_STRING_X-.1,px:HEAD_STRING_X-.1,z:i===0?-.8:.8,pz:i===0?-.8:.8});
     this.lagRecords=[{foot:0,bad:false},{foot:0,bad:false}];this.phase='lag-ready';this.scene.angle=0;this.scene.guideKey=null;this.scene.syncBalls(0);this.notify();
   }
-  shootHuman(angle,power,call){
-    if(!this.canHumanShoot)return false;this.pendingCall={...call,push:!!call?.push&&this.pushAvailable&&!this.breaking};return this.physics.shoot(angle,power);
+  shootHuman(angle,power,call,tip={}){
+    if(this.turnDeadline&&performance.now()>=this.turnDeadline){this.expireTurn();return false;}
+    if(!this.canHumanShoot)return false;this.pendingCall={...call,push:!!call?.push&&this.pushAvailable&&!this.breaking};return this.physics.shoot(angle,power,tip);
   }
   event(e){
     if(this.disposed)return;
     if(this.phase==='lag-ready'&&e.type==='shot'){
       this.phase='lag-running';const ball=this.physics.balls[1];ball.vx=shotSpeed(this.aiLagPower);ball.vz=0;
-      this.message='Hai bi đang thi băng…';this.notify();return;
+      this.message='';this.notify();return;
     }
     if(this.phase==='lag-running'){
       if(e.type==='contact')this.lagRecords.forEach(r=>r.bad=true);
@@ -47,7 +83,7 @@ export class PoolMatch {
         remaining:this.physics.balls.filter(b=>b.id&&!b.pocketed).map(b=>b.id),
         startPositions:Object.fromEntries(this.physics.balls.map(b=>[b.id,{x:b.x,z:b.z}])),
         kitchen:this.physics.hand==='kitchen',call:this.pendingCall||null,safety:!!this.pendingCall?.safety,push:!!this.pendingCall?.push};
-      this.physics.hand=null;this.message=`${this.names[this.turn]} đang đánh…`;this.notify();return;
+      this.physics.hand=null;this.message='';this.notify();return;
     }
     const shot=this.shot;if(!shot)return;
     if(e.type==='contact'&&(e.a===0||e.b===0)&&shot.first===null){
@@ -63,7 +99,7 @@ export class PoolMatch {
   finishShot(){
     const result=judgeShot({...this.config,turn:this.turn,groups:this.groups,fouls:this.fouls,breaking:this.breaking},this.shot);
     const shooter=this.turn;this.lastShot=this.shot;this.shot=null;this.pendingCall=null;
-    if(result.foul){this.foulNotice=true;clearTimeout(this.noticeTimer);this.noticeTimer=setTimeout(()=>{this.foulNotice=false;this.noticeTimer=null;if(this.phase==='playing')this.message='Lượt '+this.names[this.turn]+(this.physics.hand?' · Được đặt bi cái.':'.');this.notify();},2000);}
+    if(result.foul)this.showFoulNotice();
     if(result.foul)this.fouls[shooter]++;else this.fouls[shooter]=0;
     for(const id of result.spot)this.spot(id);
     if(result.group){this.groups[shooter]=result.group;this.groups[1-shooter]=result.group==='solid'?'stripe':'solid';}
@@ -82,6 +118,7 @@ export class PoolMatch {
     if(target){this.scene.angle=Math.atan2(target.z-cue.z,target.x-cue.x);this.scene.guideKey=null;}
   }
   startRack(breaker){
+    this.stopTurnClock();clearTimeout(this.timer);this.timer=null;
     clearTimeout(this.noticeTimer);this.foulNotice=false;this.captured=[[],[]];
     this.firstBreaker??=breaker;this.breaker=breaker;this.turn=breaker;this.groups=[null,null];this.fouls=[0,0];this.pushAvailable=false;this.breaking=true;
     const p=this.physics;p.reset('match');p.balls=competitionRack(this.config);p.autoRespot=false;p.rollingFriction=TABLES[this.config.table].friction;p.hand='kitchen';
@@ -106,7 +143,7 @@ export class PoolMatch {
     const free=x=>p.balls.every(o=>o.id===id||o.pocketed||Math.hypot(o.x-x,o.z)>=2*RADIUS+.0005);
     const positions=[FOOT_SPOT_X];for(let x=FOOT_SPOT_X+.002;x<HALF_X-RADIUS;x+=.002)positions.push(x);for(let x=FOOT_SPOT_X-.002;x>-HALF_X+RADIUS;x-=.002)positions.push(x);
     const x=positions.find(free);if(x===undefined)return;
-    Object.assign(b,{x,px:x,z:0,pz:0,y:RADIUS,py:RADIUS,vx:0,vz:0,wx:0,wz:0,pocketed:false,falling:false});
+    Object.assign(b,{x,px:x,z:0,pz:0,y:RADIUS,py:RADIUS,vx:0,vz:0,wx:0,wy:0,wz:0,pocketed:false,falling:false});
   }
   choose(action){
     if(this.phase==='lag-retry'){this.message='Thi lại để phân định quyền phá.';this.prepareLag();return;}
@@ -149,8 +186,8 @@ export class PoolMatch {
       const shot=chooseShot(this.physics,this);if(!shot)return;
       this.pendingCall=shot;this.scene.angle=shot.angle;this.scene.power=shot.power;this.scene.guideKey=null;
       this.message=`${this.names[1]} ngắm bi ${shot.ball}${!this.breaking&&this.config.game==='8'?`, lỗ ${shot.pocket+1}`:''}…`;this.onChange(this);
-      this.timer=setTimeout(()=>{this.timer=null;if(this.disposed)return;this.scene.strike(shot.power,()=>{if(!this.disposed)this.physics.shoot(shot.angle,shot.power);});this.scene.power=0;},600);
+      this.timer=setTimeout(()=>{this.timer=null;if(this.disposed)return;this.scene.strike(shot.power,()=>{if(this.disposed)return;if(this.turnDeadline&&performance.now()>=this.turnDeadline){this.expireTurn();return;}this.physics.shoot(shot.angle,shot.power);});this.scene.power=0;},600);
     },750);
   }
-  dispose(){this.disposed=true;clearTimeout(this.noticeTimer);clearTimeout(this.timer);this.timer=null;this.scene.striking=null;this.scene.power=0;}
+  dispose(){this.disposed=true;this.stopTurnClock();clearTimeout(this.noticeTimer);clearTimeout(this.timer);this.timer=null;this.scene.striking=null;this.scene.power=0;}
 }

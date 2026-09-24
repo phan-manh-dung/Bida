@@ -5,9 +5,39 @@ import {PoolPhysics,RADIUS,HALF_X} from '../src/physics.js';
 import {FOOT_SPOT_X,HEAD_STRING_X} from '../src/table-model.js';
 import {PoolMatch} from '../src/match.js';
 import {chooseShot,lagPower} from '../src/pool-ai.js';
+import {TURN_DURATION_MS} from '../src/match.js';
 const config=(game='9',extra={})=>normalizeConfig({game,level:'I',target:5,table:'club',...extra});
 const state=(extra={})=>({game:'9',rack:'nine-wpa',turn:0,groups:[null,null],fouls:[0,0],breaking:false,...extra});
 const shot=(extra={})=>({first:1,pockets:[],off:[],rails:new Set(),railAfter:true,crossed:new Set(),crossedKitchen:false,remaining:[1,2,3,4,5,6,7,8,9],startPositions:{},call:null,safety:false,push:false,...extra});
+
+test('60-second clock expires once, pauses for the foul notice and resets for the opponent',t=>{
+ t.mock.timers.enable({apis:['setTimeout']});
+ const p=new PoolPhysics(),s={syncBalls(){},strike(){},cancelPlacement(){}};
+ const m=new PoolMatch(p,s,config('9'));p.onEvent=e=>m.event(e);
+ try {
+  m.startRack(0);m.breaking=false;p.hand=null;
+  const deadline=m.turnDeadline;assert.ok(deadline-performance.now()>TURN_DURATION_MS-100);
+  m.notify();assert.equal(m.turnDeadline,deadline,'HUD updates do not reset the deadline');
+  m.turnDeadline=performance.now()-1;m.expireTurn();
+  assert.equal(m.turn,1);assert.equal(m.fouls[0],1);assert.equal(p.hand,'any');assert.equal(m.foulNotice,true);assert.equal(m.turnDeadline,null);
+  m.expireTurn();assert.equal(m.fouls[0],1);assert.equal(m.shootHuman(0,.5,{}),false);
+  t.mock.timers.tick(1999);assert.equal(m.foulNotice,true);
+  t.mock.timers.tick(1);assert.equal(m.foulNotice,false);assert.ok(m.turnDeadline-performance.now()>TURN_DURATION_MS-100);
+  m.dispose();assert.equal(m.turnDeadline,null);
+ }finally{m.dispose();}
+});
+
+test('shot clock stops during motion and expired shots cannot fire',()=>{
+ const p=new PoolPhysics(),s={syncBalls(){},strike(){}};
+ const m=new PoolMatch(p,s,config('9'));p.onEvent=e=>m.event(e);
+ try {
+  m.startRack(0);assert.equal(m.shootHuman(0,.5,{}),true);assert.equal(m.turnDeadline,null);
+  m.startRack(0);m.turnDeadline=performance.now()-1;
+  assert.equal(m.shootHuman(0,.5,{}),false);assert.equal(p.shots,0);assert.equal(m.turn,1);assert.equal(p.hand,'kitchen');
+  m.startRack(0);m.fouls[0]=2;m.turnDeadline=performance.now()-1;m.expireTurn();
+  assert.equal(m.phase,'rack-over');assert.deepEqual(m.score,[0,1]);
+ }finally{m.dispose();}
+});
 test('race validation, default name and roster counts',()=>{
  for(const target of [0,101,1.5,NaN])assert.throws(()=>config('9',{target}));
  for(const target of [1,100])assert.equal(config('9',{target,name:'  '}).name,'Người chơi 1');

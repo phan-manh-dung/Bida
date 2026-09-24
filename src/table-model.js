@@ -2,7 +2,8 @@
 // Scale: 100 x 50 inch playing bed = 8.8 x 4.4 scene units.
 export const TABLE_LENGTH_MM = 2540;
 export const TABLE_WIDTH_MM = 1270;
-export const BALL_DIAMETER_MM = 57.2;
+// Enlarged for screen readability; rendering, racks and collisions share this size.
+export const BALL_DIAMETER_MM = 65;
 export const UNITS_PER_MM = 8.8 / TABLE_LENGTH_MM;
 export const HALF_X = TABLE_LENGTH_MM * UNITS_PER_MM / 2;
 export const HALF_Z = TABLE_WIDTH_MM * UNITS_PER_MM / 2;

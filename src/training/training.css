@@ -1,0 +1,55 @@
+#training-library{position:fixed;inset:0;z-index:30;overflow:auto;background:#121c24;color:#e9efe9;padding:32px max(24px,calc((100vw - 1120px)/2));}
+#training-library nav,.training-heading,.training-actions{display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap}
+#training-library h1{font-size:clamp(25px,4vw,42px);margin:18px 0}
+#training-library p,#training-panel p{line-height:1.55}
+#training-library button,#training-panel button{padding:10px 14px;border:1px solid #ffffff24;border-radius:9px;background:#263a43;color:#edf3ef;cursor:pointer}
+#training-library select,#training-panel select{padding:8px;border:1px solid #ffffff35;background:#182730;color:#fff;border-radius:6px;max-width:100%}
+.lesson-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin:24px 0}
+#training-library .lesson-card{display:flex;flex-direction:column;text-align:left;gap:13px;min-height:160px;padding:22px;background:#1b2b34}
+.lesson-card strong{font-size:19px}.lesson-card small,.lesson-card span{color:#a9c0c4;font-size:12px}
+#training-library a{color:#91decc}#training-library details{margin:28px 0}#training-library summary{cursor:pointer}
+#training-panel{position:absolute;z-index:6;left:16px;top:80px;width:290px;max-height:calc(100dvh - 100px);overflow:auto;padding:16px;background:#12212af2;border:1px solid #8cabb94a;border-radius:14px;font-size:12px;box-shadow:0 8px 25px #0003}
+#training-panel summary{font-weight:bold;font-size:16px;cursor:pointer;margin:15px 0 8px}
+#training-panel button{font-size:11px;padding:8px}.coach-advice{color:#c0d4d2}.training-actions{margin-top:12px}
+.training-recipe{display:flex;gap:12px;align-items:center;margin-top:14px}.training-tip{flex:none;position:relative;width:48px;height:48px;border-radius:50%;background:radial-gradient(circle at 30% 25%,white,#dfded3 70%,#a5a6a0)}
+.training-tip i{position:absolute;width:9px;height:9px;border:2px solid #be263d;transform:translate(-50%,-50%);border-radius:50%}
+.training-note{font-size:11px;color:#a9bdbf}#training-feedback{color:#a4efcc}#training-panel button:disabled{opacity:.4;cursor:default}
+.training-success{padding:16px;background:#235342;border-radius:10px}
+#game.training-layout #scene{position:absolute;left:330px;right:105px;top:0;bottom:0}
+@media(max-width:800px){#training-panel{top:72px;left:10px;width:230px;padding:12px}#game.training-layout #scene{left:265px;right:95px}}
+@media(max-width:600px){#training-panel{left:10px;right:10px;top:auto;bottom:10px;width:auto;max-height:230px}#game.training-layout #scene{left:0;right:80px;bottom:250px;top:55px}.training-layout #cue-control{top:80px;bottom:335px;height:auto;transform:none}.training-layout #pull-cue{height:100%}.training-layout .spin-control{width:48px;height:48px;top:calc(100% + 8px);right:0}}
+@media(min-width:1100px){#lobby .mode-grid{grid-template-columns:repeat(4,minmax(0,1fr))}#lobby .mode-title{font-size:24px}}
+@media(max-height:500px) and (min-width:601px){#training-panel{top:65px;max-height:calc(100dvh - 75px)}}
+
+/* Coach lessons: one visual instruction at a time, with explicit comparisons. */
+#training-panel{width:344px;font-size:13px;scrollbar-width:thin;scrollbar-color:#41616b transparent}
+#game.training-layout #scene{left:382px}
+.coach-title{font:600 19px/1.3 'Segoe UI',sans-serif;margin:16px 0 8px}
+.coach-goal{color:#b5caca;font-size:12px}.coach-select{display:grid;gap:6px;color:#9abcb8;font-size:11px}
+.coach-steps{display:flex;gap:4px;position:sticky;top:-16px;background:#12212a;padding:12px 0;z-index:2}
+#training-panel .coach-steps button{flex:1;padding:9px 3px;font-size:10px}
+#training-panel [aria-pressed=true]{border-color:#76d8be;background:#20443f}
+.coach-step-body h3{font-size:14px;line-height:1.45;margin:8px 0}.coach-step-body p{font-size:12px}
+.coach-diagram{display:block;width:100%;height:auto;background:#0c1b24;border:1px solid #49626b66;border-radius:10px;margin:10px 0;font-family:'Segoe UI',sans-serif;font-size:11px}
+.coach-tip{padding:12px;background:#203c39;border-left:3px solid #8adbc5;border-radius:5px;color:#d4e9e3}
+.coach-power{height:8px;background:#34474d;border-radius:8px;overflow:hidden}.coach-power span{display:block;background:#8aead5;height:100%}
+.coach-comparison{margin-top:16px;border-top:1px solid #49626b;padding-top:8px}
+#training-panel .coach-comparison summary{font-size:13px}
+#training-panel .coach-comparison button{display:grid;text-align:left;gap:6px;width:100%;margin:8px 0;padding:12px;line-height:1.4}
+.coach-comparison span,.coach-comparison small{font-size:11px;color:#bfd1ce}.coach-footer{border-top:1px solid #49626b;padding-top:12px}
+@media(max-width:800px){#training-panel{width:265px}#game.training-layout #scene{left:295px}}
+@media(max-width:600px){#training-panel{width:auto;max-height:300px}#game.training-layout #scene{left:0;bottom:320px}.training-layout #cue-control{bottom:405px}.coach-steps{top:-12px}}
+
+.coach-compact p{font-size:12px;line-height:1.4;margin:9px 0}
+.coach-key{color:#ffdc8e;padding:8px 10px;background:#57492c55;border-radius:7px}
+.coach-contact .coach-diagram{margin:6px 0}
+.coach-contact .coach-diagram:first-child{max-height:180px}
+.coach-contact .coach-diagram:last-child{max-height:78px}
+.coach-placement .coach-diagram{max-height:135px;margin:6px 0}
+.coach-destination{color:#a4efcc}.coach-destination span{font-size:20px;vertical-align:middle}
+.coach-extra{margin-top:10px;border-top:1px solid #49626b}
+#training-panel .coach-extra summary{font-size:12px;margin:10px 0}
+#training-panel .coach-alternative{display:grid;text-align:left;gap:5px;width:100%;margin:7px 0;line-height:1.4}
+.coach-alternative span{font-size:11px;color:#bfd1ce}
+#training-panel .coach-title{margin:10px 0 5px}
+.coach-compact .coach-tip{padding:9px}

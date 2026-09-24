@@ -13,6 +13,40 @@ function isolate(game, ids) {
   game.balls.forEach(b => { b.pocketed = !ids.includes(b.id); });
 }
 
+test('low tip draws back after impact while high tip follows the object ball',()=>{
+ const outcomes=[];
+ for(const y of [-1,0,1]){
+  const p=new PoolPhysics();isolate(p,[0,1]);Object.assign(p.cueBall,{x:-1,z:0});Object.assign(p.balls[1],{x:0,z:0});
+  let contact=null;p.onEvent=e=>{if(e.type==='contact'&&contact===null)contact=p.cueBall.x;};
+  p.shoot(0,.5,{x:0,y});for(let i=0;i<180;i++)p.update(1/360);
+  assert.notEqual(contact,null);outcomes.push({x:p.cueBall.x,vx:p.cueBall.vx,contact});
+ }
+ assert.ok(outcomes[0].vx<-.5&&outcomes[0].x<outcomes[0].contact-.15,'Backspin must physically reverse the cue ball after contact');
+ assert.ok(outcomes[2].vx>1&&outcomes[2].x>outcomes[1].x+.1,'Follow must advance further than centre ball');
+});
+
+test('opposite side spin changes rail rebound in opposite directions and dissipates energy',()=>{
+ const rebounds=[];
+ for(const x of [-1,0,1]){
+  const p=new PoolPhysics();isolate(p,[0,1]);Object.assign(p.cueBall,{x:3.6,z:.5});Object.assign(p.balls[1],{x:-3,z:1});
+  let rebound=null;p.onEvent=e=>{if(e.type==='cushion'&&e.id===0&&rebound===null)rebound={vx:p.cueBall.vx,vz:p.cueBall.vz};};
+  p.shoot(0,.45,{x,y:0});
+  const energy=()=>p.balls.filter(b=>!b.pocketed).reduce((sum,b)=>sum+.5*(b.vx*b.vx+b.vz*b.vz)+.2*RADIUS*RADIUS*(b.wx*b.wx+b.wy*b.wy+b.wz*b.wz),0);
+  const initial=energy();for(let i=0;i<240;i++)p.update(1/360);
+  assert.ok(rebound&&rebound.vx<0);assert.ok(energy()<=initial+1e-6);rebounds.push(rebound.vz);runUntilStill(p);
+ }
+ assert.ok(rebounds[0]*rebounds[2]<0);assert.ok(Math.abs(rebounds[0])>.1);assert.ok(Math.abs(rebounds[0]+rebounds[2])<1e-6);assert.ok(Math.abs(rebounds[1])<1e-8);
+});
+
+test('tip input clamps safely and pure side spin rotates the visible ball until it stops',()=>{
+ const p=new PoolPhysics();isolate(p,[0,1]);
+ p.shoot(0,.4,{x:100,y:100});
+ assert.ok(Math.hypot(p.cueBall.wx,p.cueBall.wy,p.cueBall.wz)*RADIUS<=shotSpeed(.4)*1.25+1e-8);
+ p.reset();isolate(p,[0,1]);Object.assign(p.cueBall,{x:0,z:0,wy:10});p.moving=true;
+ const q=p.cueBall.qy;p.update(.05);assert.notEqual(p.cueBall.qy,q);assert.equal(p.cueBall.x,0);runUntilStill(p);assert.equal(p.cueBall.wy,0);
+ p.reset();p.shoot(0,.4,{x:NaN,y:Infinity});assert.equal(Math.abs(p.cueBall.wy),0);assert.equal(Math.abs(p.cueBall.wz),0);
+});
+
 test('both layouts have 16 distinct, non-overlapping balls inside the table', () => {
   for (const layout of ['practice', 'rack']) {
     const balls = createRack(layout);
@@ -270,7 +304,7 @@ test('ten full breaks spread the rack, including its inner balls',()=>{
     assert.ok(inner.length>=4,`Inner cluster stayed frozen at z=${z}`);
     // A single ball may remain near its starting point in an off-centre break;
     // the straight-on fixture must transmit the impact through the centre.
-    if(z===0)assert.ok(travel[5]>.5, 'Centre break failed to move the eight ball');
+    if(z===0)assert.ok(travel[5]>RADIUS, 'Centre break failed to move the eight ball by its radius');
     runUntilStill(game);
     assert.ok(game.balls.every(b=>Number.isFinite(b.x)&&Number.isFinite(b.z)));
   }
@@ -289,7 +323,7 @@ test('dense-rack impulse propagation does not depend on ball array order',()=>{
 
 test('finite ball contact transfers momentum without adding kinetic energy or repeated sounds',()=>{
   const events=[],game=new PoolPhysics(e=>events.push(e));isolate(game,[0,1]);
-  Object.assign(game.cueBall,{x:-.205,z:0,vx:5,vz:0,wx:0,wz:-5/RADIUS});
+  Object.assign(game.cueBall,{x:-(2*RADIUS+.007),z:0,vx:5,vz:0,wx:0,wz:-5/RADIUS});
   Object.assign(game.balls[1],{x:0,z:0});
   for(let i=0;i<6;i++)game.step(1/360);
   const a=game.cueBall,b=game.balls[1];
@@ -299,13 +333,13 @@ test('finite ball contact transfers momentum without adding kinetic energy or re
   assert.equal(events.filter(e=>e.type==='collision').length,1);
 });
 
-test('physical scale is a 2540 by 1270 mm bed with 57.2 mm balls',()=>{
+test('physical scale is a 2540 by 1270 mm bed with 65 mm balls',()=>{
   assert.equal(TABLE_LENGTH_MM,2540);assert.equal(TABLE_WIDTH_MM,1270);
-  assert.equal(BALL_DIAMETER_MM,57.2);
+  assert.equal(BALL_DIAMETER_MM,65);
   assert.ok(Math.abs(HALF_X*2/UNITS_PER_MM-2540)<1e-9);
   assert.ok(Math.abs(HALF_Z*2/UNITS_PER_MM-1270)<1e-9);
-  assert.ok(Math.abs(RADIUS*2/UNITS_PER_MM-57.2)<1e-9);
-  assert.ok(Math.abs(RADIUS/HALF_X-57.2/2540)<1e-12);
+  assert.ok(Math.abs(RADIUS*2/UNITS_PER_MM-65)<1e-9);
+  assert.ok(Math.abs(RADIUS/HALF_X-65/2540)<1e-12);
 });
 
 test('all pull strengths have 25 percent less launch speed',()=>{

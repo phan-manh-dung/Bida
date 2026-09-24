@@ -1,6 +1,8 @@
 # NOIR — Billiards Club
 
-Web bida 3D tiếng Việt với trang chủ, chơi với máy và tập luyện. Bi 57,2 mm trên mặt chơi 254 × 127 cm. Xem [cơ sở kỹ thuật và nguồn luật](RESEARCH.md).
+Web bida 3D tiếng Việt với trang chủ, chơi với máy và tập luyện. Bi 65 mm trên mặt chơi 254 × 127 cm. Xem [cơ sở kỹ thuật và nguồn luật](RESEARCH.md).
+
+Bi đã tăng khoảng 14% để dễ nhìn trên màn hình, đồng bộ kích thước hình ảnh và va chạm. Số đậm trên nền trắng được in trên bề mặt và xoay theo bi khi lăn; bi cái có sáu chấm đen lớn ở sáu hướng đối diện nhau và dùng bề mặt khuếch tán không phản sáng. Camera tự vừa cửa sổ và khóa zoom bằng cuộn chuột/chụm hai ngón. Đây là lựa chọn hỗ trợ quan sát, khác kích thước thi đấu 57,2 mm của các bản trước. Kiểm tra hiển thị: `node tests/ball-readability.mjs` và `node tests/revision9.mjs` (cần server ở cổng 5173).
 
 ## Trang chủ và chơi với máy
 
@@ -11,7 +13,7 @@ Web bida 3D tiếng Việt với trang chủ, chơi với máy và tập luyện
 - Hai bên thi băng đầu trận; người thắng chọn phá hoặc nhường. Các ván sau luân phiên phá. Khi phạm lỗi, giao diện hướng dẫn đặt bi hoặc chọn cách tiếp tục phù hợp.
 - Club, Novice, Tournament hiện khác tốc độ nỉ; cùng kích thước mặt chơi 9 feet. Hỗ trợ đường ngắm và ghost ball; đã bỏ camera theo bi.
 
-Mặc định vào bàn bằng góc nhìn từ trên. Chuột trái dùng ngắm/đặt bi; chỉ xoay bằng chuột phải ở góc 3D, tốc độ xoay thấp. 9-ball có hàng trạng thái 9 bi và tự hướng cơ tới bi nhỏ nhất sau cú đánh. Bảng trên có avatar và 9 ô bi riêng cho mỗi người; bi vào lỗ xuất hiện dưới người đánh, bi đặt lại được xóa khỏi hàng. Thông báo chữ đỏ dưới khung người chơi làm mờ bàn trong 2 giây, khóa lượt cho tới khi thông báo tắt. Không còn cột bên trái. Dấu cuối bàn dài hơn và khu vực bếp có thêm hai vạch dọc mờ. Số được in lớn hơn trên texture và quay cùng bi; đã bỏ nhãn số đứng yên theo camera và thanh chỉnh hướng cơ. Không đổi kích thước vật lý.
+Mặc định vào bàn bằng góc nhìn từ trên. Chuột trái dùng ngắm/đặt bi; chỉ xoay bằng chuột phải ở góc 3D, tốc độ xoay thấp. 9-ball có hàng trạng thái 9 bi và tự hướng cơ tới bi nhỏ nhất sau cú đánh. Bảng trên có avatar và 9 ô bi riêng cho mỗi người; hàng bi vào lỗ nằm dưới tên người đánh, bên cạnh avatar; đã bỏ dòng 9-ball, bi đặt lại được xóa khỏi hàng. Popup lỗi hiện 2 giây, khóa đánh trong thời gian này nhưng không làm tối hay mờ bàn. Không hiện thông báo lúc bi đang chạy. Viền avatar đếm ngược 60 giây mỗi cú đánh, cả hai bên màu xanh. Avatar máy nằm ở mép phải đối xứng với người chơi; thanh trên được giảm chiều cao. Hết giờ tính lỗi và chuyển lượt, đối thủ được đặt bi cái (trong bếp nếu chưa phá). Đồng hồ dừng khi bi chạy hoặc đang chờ lựa chọn; lượt tiếp theo bắt đầu sau khi popup lỗi đóng. Không còn cột bên trái. Dấu cuối bàn dài hơn và khu vực bếp có thêm hai vạch dọc mờ. Số được in lớn hơn trên texture và quay cùng bi; đã bỏ nhãn số đứng yên theo camera và thanh chỉnh hướng cơ. Kích thước hiện tại là 65 mm.
 
 Máy dùng tính toán đường đánh và sai số theo hạng, chưa phải mô phỏng trình độ vận động viên chuyên nghiệp. Luật áp dụng cho thao tác mà game hỗ trợ; chưa có nhảy bi, trọng tài xử lý hành vi ngoài cú đánh hoặc phân xử ván bế tắc. Trận đấu chưa lưu khi tải lại trang.
 
@@ -38,13 +40,16 @@ npm run preview
 
 ## Điều khiển
 
+- Quả bi nhỏ cạnh thanh cơ cho chọn điểm chạm đầu cơ bằng chuột/chạm: trên là cu-lê, dưới là trô, trái/phải là ép phê. Chỉ sáng và cho chỉnh khi tới lượt bạn, bi đã dừng. Chạm tâm quả bi để đặt lại; khi chọn quả bi bằng Tab có thể dùng phím mũi tên và R. Điểm chạm tự về tâm sau cú đánh.
+- Xoáy được truyền vào vận tốc góc của bi và hiển thị qua các chấm đen; trô/cu-lê thay đổi chuyển động sau va chạm theo ma sát nỉ, còn ép phê thay đổi hướng bật băng. Lực và khoảng cách tới bi mục tiêu quyết định lượng xoáy còn lại khi chạm bi. Điểm chạm tối đa tương ứng nửa bán kính để tránh vùng trượt đầu cơ.
+
 - Nhấp/chạm lên mặt bàn để ngắm.
 - Trước cú phá đầu tiên, giữ/kéo trực tiếp bi trắng sang hai bên dọc vạch bếp. Escape hoặc hủy cảm ứng trả về chỗ cũ. Sau cú đầu, chức năng đặt bi này khóa lại.
 - Kéo cây cơ ở mép phải **từ trên xuống**, thả để đánh. Khoảng kéo quyết định lực.
 - Kéo về vị trí ban đầu hoặc nhấn Escape để hủy. Mất tiêu điểm/cảm ứng bị hủy không tạo cú đánh.
-- Ở góc 3D, giữ chuột phải để xoay; cuộn hoặc chụm hai ngón để thu phóng.
-- Ba nút dưới bên phải: 3D, từ trên, theo cơ.
-- Nút dưới trái mở menu: ván mới, cách chơi, toàn màn hình.
+- Ở góc 3D, giữ chuột phải để xoay; bàn tự vừa màn hình, đã khóa phóng to/thu nhỏ.
+- Menu ba gạch → Góc nhìn: 3D, từ trên, theo cơ. Tỷ số hai bên đặt chung ở giữa (0 - 0). Nút Ván tiếp theo màu xanh nằm trên thanh trên cùng, bên phải.
+- Nút trên trái mở menu: ván mới, cách chơi, toàn màn hình.
 - Nút trên phải mở tùy chọn: màu nỉ, đường ngắm và âm thanh.
 - ←/→ chỉnh hướng, Shift để chỉnh nhỏ. Space giữ để lấy lực rồi thả để đánh.
 - Khi cây cơ được chọn bằng Tab: ↓/↑ chỉnh lực, Enter đánh, Home/Escape hủy.
@@ -153,7 +158,7 @@ Kiểm tra cơ dùng 7.337 điểm trên các phần thân cơ ở bảy vị tr
 
 ## Giới hạn
 
-Chưa có bot/online, luật thi đấu 8-ball/9-ball, điều khiển xoáy, nhảy bi hoặc mô phỏng đàn hồi 3D đầy đủ. Phần bật băng là mô hình xấp xỉ đã hiệu chỉnh, không phải đo kiểm bàn thi đấu ngoài đời. Kiểm tra cảm ứng dùng giả lập Chrome; cần tiếp tục chơi thử trên điện thoại thật.
+Có chơi với máy, luật 8-ball/9-ball và điều khiển xoáy. Chưa có online, nhảy bi, massé, độ lệch do thân cơ hoặc mô hình đầy đủ về ma sát tiếp tuyến giữa hai bi. Phần bật băng và ma sát xoáy quanh trục đứng là mô hình xấp xỉ, không phải đo kiểm bàn thi đấu ngoài đời. Kiểm tra cảm ứng dùng giả lập Chrome; cần tiếp tục chơi thử trên điện thoại thật. Công thức xung lượng xoáy theo điểm chạm tham chiếu [Dr. Dave, TP A.12](https://drdavepoolinfo.com/technical_proofs/new/TP_A-12.pdf). Kiểm tra điều khiển: `node tests/spin-control.mjs`.
 
 ## Mã nguồn
 

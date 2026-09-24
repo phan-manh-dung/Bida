@@ -1,4 +1,5 @@
 import { HALF_X, HALF_Z, RADIUS, CUSHION_SEGMENTS, POCKET_DETAILS, pocketCoordinates, pocketPoint, closestPoint, BREAK_CUE_X, FOOT_SPOT_X, HEAD_STRING_X } from './table-model.js';
+import { normalizeTip, MAX_TIP_OFFSET } from './cue-spin.js';
 export { HALF_X, HALF_Z, RADIUS, POCKETS } from './table-model.js';
 export const BALL_COLORS = ['#fffdf4', '#f4b900', '#124cbd', '#b61b25', '#66268b', '#e65509', '#006844', '#711824', '#080b10', '#f4b900', '#124cbd', '#b61b25', '#66268b', '#e65509', '#006844', '#711824'];
 export const STEP = 1 / 360;
@@ -26,15 +27,15 @@ function initialRotation(id) {
     qz:c1*c2*s3+s1*s2*c3, qw:c1*c2*c3-s1*s2*s3 };
 }
 
-function integrateRotation(b, wx, wz, dt) {
-  const speed = Math.hypot(wx, wz);
+function integrateRotation(b, wx, wy, wz, dt) {
+  const speed = Math.hypot(wx, wy, wz);
   if (speed < 1e-10) return;
   const half = speed * dt / 2, scale = Math.sin(half) / speed;
-  const x = wx * scale, z = wz * scale, w = Math.cos(half);
-  const qx = w * b.qx + x * b.qw - z * b.qy;
-  const qy = w * b.qy + z * b.qx - x * b.qz;
-  const qz = w * b.qz + z * b.qw + x * b.qy;
-  const qw = w * b.qw - x * b.qx - z * b.qz;
+  const x = wx * scale, y = wy * scale, z = wz * scale, w = Math.cos(half);
+  const qx = w * b.qx + x * b.qw + y * b.qz - z * b.qy;
+  const qy = w * b.qy + y * b.qw + z * b.qx - x * b.qz;
+  const qz = w * b.qz + z * b.qw + x * b.qy - y * b.qx;
+  const qw = w * b.qw - x * b.qx - y * b.qy - z * b.qz;
   const norm = Math.hypot(qx, qy, qz, qw);
   b.qx = qx / norm; b.qy = qy / norm; b.qz = qz / norm; b.qw = qw / norm;
 }
@@ -43,7 +44,7 @@ export function createRack(layout = 'rack') {
   const make = (id, x, z) => {
     const q = initialRotation(id), norm = Math.hypot(q.qx,q.qy,q.qz,q.qw);
     const rotation = { qx:q.qx/norm,qy:q.qy/norm,qz:q.qz/norm,qw:q.qw/norm };
-    return { id, x, z, px:x, pz:z, y:RADIUS, py:RADIUS, vx:0, vz:0, vy:0, wx:0, wz:0, ...rotation,
+    return { id, x, z, px:x, pz:z, y:RADIUS, py:RADIUS, vx:0, vz:0, vy:0, wx:0, wy:0, wz:0, ...rotation,
       pqx:rotation.qx,pqy:rotation.qy,pqz:rotation.qz,pqw:rotation.qw, pocketed:false,falling:false };
   };
   const balls = [make(0, layout === 'rack' ? BREAK_CUE_X : -2.45, layout === 'rack' ? 0 : 0.1)];
@@ -116,7 +117,7 @@ export class PoolPhysics {
     Object.assign(this.cueBall, { x: placedX, px: placedX, z: clamped, pz: clamped,y:RADIUS,py:RADIUS,pocketed:false,falling:false });
     return true;
   }
-  shoot(angle, power) {
+  shoot(angle, power, tip = {}) {
     if (!this.canShoot || !Number.isFinite(angle) || !Number.isFinite(power) || power < 0.025) return false;
     const speed = shotSpeed(power);
     this.breakPending = this.layout === 'rack' && this.shots === 0;
@@ -124,7 +125,11 @@ export class PoolPhysics {
     for(const b of this.balls)if(!b.pocketed)CUSHION_SEGMENTS.forEach((s,i)=>{
       const [x,z]=closestPoint(s,b.x,b.z);if(Math.hypot(x-b.x,z-b.z)<=RADIUS+.0001)this.frozenRails.add(b.id*32+i);
     });
-    Object.assign(this.cueBall, { vx: Math.cos(angle) * speed, vz: Math.sin(angle) * speed, wx: 0, wz: 0 });
+    const contact=normalizeTip(tip),spin=2.5*MAX_TIP_OFFSET*speed/RADIUS;
+    // Angular impulse r x J / I, with I = 2/5 mR². Cloth friction, not a
+    // scripted reverse impulse, turns retained backspin into draw after impact.
+    Object.assign(this.cueBall, { vx: Math.cos(angle) * speed, vz: Math.sin(angle) * speed,
+      wx:Math.sin(angle)*contact.y*spin,wy:contact.x*spin,wz:-Math.cos(angle)*contact.y*spin });
     this.moving = true; this.shots++; this.scratch = false;
     this.onEvent({ type: 'shot', speed, x: this.cueBall.x, z: this.cueBall.z });
     return true;
@@ -133,9 +138,9 @@ export class PoolPhysics {
     if (!this.moving) return;
     this.accumulator += Math.min(dt, 0.1);
     while (this.accumulator >= STEP) { this.step(STEP); this.accumulator -= STEP; }
-    if (!this.balls.some(b => b.falling || (!b.pocketed && (Math.hypot(b.vx, b.vz) > STOP_SPEED || Math.hypot(b.wx, b.wz) * RADIUS > STOP_SPEED)))) {
+    if (!this.balls.some(b => b.falling || (!b.pocketed && (Math.hypot(b.vx, b.vz) > STOP_SPEED || Math.hypot(b.wx, b.wy, b.wz) * RADIUS > STOP_SPEED)))) {
       this.moving = false; this.accumulator = 0;
-      for (const b of this.balls) { b.vx = b.vz = b.wx = b.wz = 0; b.px = b.x; b.pz = b.z; b.py = b.y; b.pqx=b.qx;b.pqy=b.qy;b.pqz=b.qz;b.pqw=b.qw; }
+      for (const b of this.balls) { b.vx = b.vz = b.wx = b.wy = b.wz = 0; b.px = b.x; b.pz = b.z; b.py = b.y; b.pqx=b.qx;b.pqy=b.qy;b.pqz=b.qz;b.pqw=b.qw; }
       if (this.cueBall.pocketed && this.autoRespot) this.respotCue();
       this.onEvent({ type: 'settled', scratch: this.scratch });
     }
@@ -160,18 +165,22 @@ export class PoolPhysics {
   substep(dt) {
     for (const b of this.balls) {
       const startX=b.x,startZ=b.z;
-      const oldWx = b.wx, oldWz = b.wz;
+      const oldWx = b.wx, oldWy=b.wy, oldWz = b.wz;
       if (b.falling) {
         b.vy -= GRAVITY * dt; b.y += b.vy * dt;
         const p = POCKET_DETAILS[b.pocketIndex];
         const target = pocketPoint(p, 0, p.roundCenter);
         const t = 1 - Math.exp(-12 * dt);
         b.x += (target[0] - b.x) * t; b.z += (target[1] - b.z) * t;
-        if (b.y < -0.6) { b.falling = false; b.vx = b.vz = b.wx = b.wz = 0; }
+        if (b.y < -0.6) { b.falling = false; b.vx = b.vz = b.wx = b.wy = b.wz = 0; }
       } else if (!b.pocketed && (b.vx || b.vz || b.wx || b.wz)) clothMotion(b, dt, this.rollingFriction);
       if((startX-HEAD_STRING_X)*(b.x-HEAD_STRING_X)<0)this.onEvent({type:'head-cross',id:b.id,forward:b.x>startX});
       if(startZ*b.z<0)this.onEvent({type:'center-cross',id:b.id});
-      integrateRotation(b, (oldWx + b.wx) * 0.5, (oldWz + b.wz) * 0.5, dt);
+      if(!b.pocketed){
+        // Effective torsional cloth friction; always dissipates side-spin energy.
+        b.wy=Math.sign(b.wy)*Math.max(0,Math.abs(b.wy)-GRAVITY*.04/RADIUS*dt);
+      }
+      integrateRotation(b, (oldWx + b.wx) * 0.5, (oldWy+b.wy)*0.5, (oldWz + b.wz) * 0.5, dt);
     }
     const active = this.balls.filter(b => !b.pocketed);
     for (const b of active) { b.dvx=0; b.dvz=0; }
@@ -215,7 +224,13 @@ export class PoolPhysics {
         const vn = b.vx * nx + b.vz * nz;
         if (vn < 0) {
           const restitution = (segment.jaw ? 0.73 : 0.86) - Math.min(0.07, Math.abs(vn) * 0.004);
-          const tx = -nz, tz = nx, vt = (b.vx * tx + b.vz * tz) * 0.985;
+          const tx = -nz, tz = nx;
+          let vt = (b.vx * tx + b.vz * tz) * 0.985;
+          if(Math.abs(b.wy)>1e-6){
+            const slip=vt+RADIUS*b.wy,limit=.18*(1+restitution)*(-vn);
+            const impulse=Math.max(-limit,Math.min(limit,-slip/3.5));
+            vt+=impulse;b.wy+=2.5*impulse/RADIUS;
+          }
           b.vx = -vn * restitution * nx + vt * tx;
           b.vz = -vn * restitution * nz + vt * tz;
           // Raised cushion nose partly redirects roll; the cloth resolves residual slip.
@@ -235,7 +250,7 @@ export class PoolPhysics {
         }
       }
       if(!b.pocketed&&(Math.abs(b.x)>HALF_X+.8||Math.abs(b.z)>HALF_Z+.8)){
-        b.pocketed=true;b.vx=b.vz=b.wx=b.wz=0;this.onEvent({type:'off-table',id:b.id});
+        b.pocketed=true;b.vx=b.vz=b.wx=b.wy=b.wz=0;this.onEvent({type:'off-table',id:b.id});
       }
     }
   }
@@ -243,7 +258,7 @@ export class PoolPhysics {
     const b = this.cueBall;
     for (let x = -2.8; x < HALF_X - RADIUS; x += RADIUS * 2.2) for (let z = 0; z < HALF_Z - RADIUS; z += RADIUS * 2.2) {
       if (this.balls.every(other => !other.id || other.pocketed || Math.hypot(other.x - x, other.z - z) > RADIUS * 2.1)) {
-        Object.assign(b, { x, z, px: x, pz: z, y: RADIUS, py: RADIUS, vx: 0, vz: 0, vy: 0, wx: 0, wz: 0, pocketed: false, falling: false });
+        Object.assign(b, { x, z, px: x, pz: z, y: RADIUS, py: RADIUS, vx: 0, vz: 0, vy: 0, wx: 0, wy: 0, wz: 0, pocketed: false, falling: false });
         return;
       }
     }

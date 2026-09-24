@@ -103,14 +103,14 @@ try {
   await page.keyboard.down('Space'); await page.waitForTimeout(250); await page.keyboard.up('Space');
   await page.waitForFunction(() => window.__noir.physics.shots === 1);
   await page.locator('#menu-toggle').click(); await page.locator('#new-game').click(); await page.locator('[data-layout="rack"]').click();
-  await page.locator('[data-view="cue"]').click();
+  await page.locator('#menu-toggle').click(); await page.locator('[data-view="cue"]').click();
   await page.screenshot({ path: 'artifacts/cue-view-v2.png' });
-  await page.locator('[data-view="top"]').click();
+  await page.locator('#menu-toggle').click(); await page.locator('[data-view="top"]').click();
   await page.screenshot({ path: 'artifacts/top-view-v2.png' });
   for (const [width, height] of [[390,844],[844,390],[768,1024],[1024,768],[1920,1080]]) {
     await page.setViewportSize({ width, height });
     for (const view of ['orbit','top']) {
-      await page.locator(`[data-view="${view}"]`).click();
+      await page.locator('#menu-toggle').click(); await page.locator(`[data-view="${view}"]`).click();
       await page.waitForTimeout(180);
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth || document.documentElement.scrollHeight > innerHeight), false);
       const fits = await page.evaluate(() => {
@@ -130,9 +130,11 @@ try {
   await touchPage.locator('#practice-start').click();
   await touchPage.waitForFunction(() => !!window.__noir?.scene);
   await touchPage.evaluate(()=>{const {physics,scene}=window.__noir;physics.reset('practice');scene.angle=-.281;scene.syncBalls(0);});
+  // Project the touch after the newly visible canvas has rendered its fitted camera.
+  await touchPage.evaluate(async()=>{await new Promise(requestAnimationFrame);await new Promise(requestAnimationFrame);});
   const touchTarget = await touchPage.evaluate(() => window.__noir.scene.project(1,0.5));
   await touchPage.touchscreen.tap(touchTarget.x,touchTarget.y);
-  assert.ok(Math.abs(await touchPage.evaluate(() => window.__noir.scene.angle) - Math.atan2(0.4,3.45)) < 0.03);
+  await touchPage.waitForFunction(() => Math.abs(window.__noir.scene.angle - Math.atan2(0.4,3.45)) < 0.03);
   const cdp = await mobile.newCDPSession(touchPage), r = await touchPage.locator('#pull-cue').boundingBox();
   const tx = r.x + r.width * 0.45, ty = r.y + r.height * 0.25;
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: tx, y: ty }] });

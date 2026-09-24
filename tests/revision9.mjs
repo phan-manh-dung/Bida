@@ -24,12 +24,12 @@ try {
  });
  assert.equal(result.shadows,0);assert.equal(result.ballShadows,false);assert.equal(result.cueShadows,false);
  for(const frame of result.frames){assert.equal(frame.cue,false);assert.equal(frame.guide,false);assert.equal(frame.ghost,false);}
- for(const size of result.sizes){assert.ok(Math.abs(size.mm-57.2)<1e-8);assert.deepEqual(size.scale,[1,1,1]);}
+ for(const size of result.sizes){assert.ok(Math.abs(size.mm-65)<1e-8);assert.deepEqual(size.scale,[1,1,1]);}
  let previousSpeed=Infinity;
  for(let i=1;i<result.frames.length;i++){
   const a=result.frames[i-1],b=result.frames[i],speed=(b.x-a.x)/((b.t-a.t)/1000);
   assert.ok(speed>0 && speed<=previousSpeed+.02,'Uneven frame intervals must not make the rolling ball jump/accelerate');previousSpeed=speed;
  }
  await page.screenshot({path:'artifacts/rolling-v9.png'});
- console.log('PASS: 57.2 mm rendered balls, no moving shadows/cue/guide after impact, continuous travel at uneven frame intervals.');
+ console.log('PASS: 65 mm rendered balls, no moving shadows/cue/guide after impact, continuous travel at uneven frame intervals.');
 }finally{await browser.close();}

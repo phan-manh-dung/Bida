@@ -1,4 +1,5 @@
 import { HALF_X, HALF_Z, OUTER_X, OUTER_Z, RADIUS, CLOTH_Y, CUSHION_PROFILE } from './table-model.js';
+import { normalizeTip, MAX_TIP_OFFSET } from './cue-spin.js';
 
 export const CUE_LENGTH = 2.8;
 export const CUE_DRAW = 0.95;
@@ -25,18 +26,19 @@ export function supportHeight(x, z, railTop) {
   return railTop;
 }
 
-export function cueElevation(ball, angle, railTop) {
+export function cueElevation(ball, angle, railTop, tip={}) {
+  const point=normalizeTip(tip),side=point.x*MAX_TIP_OFFSET*RADIUS,vertical=point.y*MAX_TIP_OFFSET*RADIUS;
   const dx = -Math.cos(angle), dz = -Math.sin(angle);
   const clears = elevation => {
     const cos = Math.cos(elevation), sin = Math.sin(elevation);
     // Cover the entire drawn stroke. A fixed bridge angle avoids lifting/jumping while pulling.
     for (let s = RADIUS; s <= CUE_LENGTH + CUE_DRAW + CUE_IDLE_GAP; s += 0.018) {
-      const height = supportHeight(ball.x + dx * s * cos, ball.z + dz * s * cos, railTop);
+      const height = supportHeight(ball.x-Math.sin(angle)*side + dx * s * cos, ball.z+Math.cos(angle)*side + dz * s * cos, railTop);
       if (height === -Infinity) continue;
       // At a given distance the resting cue is thicker than the drawn cue.
       // Use that taper, rather than the butt radius at the narrow tip.
       const shaftRadius = 0.021 + 0.026 * Math.min(1, Math.max(0, s / CUE_LENGTH));
-      if (CLOTH_Y + RADIUS + s * sin - shaftRadius < height + 0.010) return false;
+      if (CLOTH_Y + RADIUS + vertical + s * sin - shaftRadius < height + 0.010) return false;
     }
     return true;
   };
@@ -46,12 +48,14 @@ export function cueElevation(ball, angle, railTop) {
   return elevation;
 }
 
-export function cuePose(ball, angle, power, elevation) {
+export function cuePose(ball, angle, power, elevation, tip={}) {
+  const point=normalizeTip(tip),side=point.x*MAX_TIP_OFFSET*RADIUS,vertical=point.y*MAX_TIP_OFFSET*RADIUS;
+  const advance=RADIUS-Math.sqrt(RADIUS*RADIUS-side*side-vertical*vertical);
   const cos = Math.cos(elevation), sin = Math.sin(elevation);
   const axis = [Math.cos(angle) * cos, -sin, Math.sin(angle) * cos];
   const gap = CUE_IDLE_GAP + power * CUE_DRAW;
   return {
     axis,
-    position: [ball.x - axis[0] * gap, CLOTH_Y + RADIUS - axis[1] * gap, ball.z - axis[2] * gap],
+    position: [ball.x-Math.sin(angle)*side+Math.cos(angle)*advance - axis[0] * gap, CLOTH_Y + RADIUS + vertical - axis[1] * gap, ball.z+Math.cos(angle)*side+Math.sin(angle)*advance - axis[2] * gap],
   };
 }

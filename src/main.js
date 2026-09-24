@@ -5,6 +5,8 @@ import { PoolAudio } from './audio.js';
 import { pullTravel, pullPower } from './shot-control.js';
 import { mountHomepage, mountMatchHUD } from './homepage.js';
 import { PoolMatch } from './match.js';
+import { mountSpinControl } from './cue-spin.js';
+import { mountTraining } from './training/index.js';
 
 const paths = {
   menu: '<path d="M4 6h16M4 12h16M4 18h16"/>',
@@ -39,16 +41,19 @@ $('#app').innerHTML = `
       </div>
       <span class="cue-hint" id="cue-instructions">Kéo xuống · Thả</span>
     </div>
-    <div class="camera-control" role="group" aria-label="Góc nhìn">
-      <button class="camera-button active" data-view="orbit" aria-label="Góc nhìn 3D" aria-pressed="true" title="Góc nhìn 3D">${icon('cube')}</button>
-      <button class="camera-button" data-view="top" aria-label="Góc nhìn từ trên" aria-pressed="false" title="Góc nhìn từ trên">${icon('top')}</button>
-      <button class="camera-button" data-view="cue" aria-label="Góc nhìn theo cơ" aria-pressed="false" title="Góc nhìn theo cơ">${icon('cue')}</button>
-    </div>
     <p class="sr-only" id="game-status" role="status">Sẵn sàng.</p>
   </main>
   <dialog id="menu-dialog" class="menu-dialog" aria-labelledby="menu-title">${close}
     <p class="overline">BILLIARDS CLUB</p><h1 id="menu-title">NOIR</h1>
     <p class="muted">Người chơi tự do · Luyện tập 15 bi</p>
+    <section class="menu-views" aria-labelledby="view-title">
+      <h2 id="view-title">Góc nhìn</h2>
+      <div class="camera-control" role="group" aria-label="Góc nhìn">
+        <button class="camera-button" data-view="orbit" aria-label="Góc nhìn 3D" aria-pressed="false">${icon('cube')}<span>3D</span></button>
+        <button class="camera-button active" data-view="top" aria-label="Góc nhìn từ trên" aria-pressed="true">${icon('top')}<span>Từ trên</span></button>
+        <button class="camera-button" data-view="cue" aria-label="Góc nhìn theo cơ" aria-pressed="false">${icon('cue')}<span>Theo cơ</span></button>
+      </div>
+    </section>
     <button class="menu-item" id="new-game">${icon('reset')} Ván mới ${icon('chevron')}</button>
     <button class="menu-item" id="help">${icon('help')} Cách chơi ${icon('chevron')}</button>
     <button class="menu-item" id="fullscreen">${icon('expand')} <span>Toàn màn hình</span> ${icon('chevron')}</button>
@@ -71,15 +76,17 @@ $('#app').innerHTML = `
     </details>
   </dialog>
   <dialog id="reset-dialog" aria-labelledby="reset-title">${close}<p class="overline">VÁN MỚI</p><h2 id="reset-title">Xếp lại bàn bi</h2><p class="muted">Xếp đủ 15 bi thành tam giác. Trước cú phá, bạn có thể kéo bi trắng sang hai bên dọc vạch bếp.</p><button class="layout-option" data-layout="rack">Xếp bi và bắt đầu ${icon('chevron')}</button></dialog>
-  <dialog id="help-dialog" aria-labelledby="help-title">${close}<p class="overline">CÁCH CHƠI</p><h2 id="help-title">Ngắm. Kéo. Thả.</h2><ol><li>Chạm hoặc nhấp lên mặt bàn để chọn hướng ngắm.</li><li>Kéo cây cơ ở mép phải từ trên xuống. Kéo càng xa, lực càng mạnh. Thả để đánh.</li><li>Kéo cơ lên lại vị trí ban đầu hoặc nhấn Escape để hủy cú đánh.</li><li>Ở góc 3D, giữ chuột phải để xoay nhẹ; cuộn hoặc chụm hai ngón để thu phóng. Ba nút góc phải dưới đổi góc nhìn.</li></ol><p class="setting-note">Bàn phím: ← → chỉnh hướng, Shift để chỉnh nhỏ. Khi chọn cây cơ bằng Tab, ↓ ↑ chỉnh lực và Enter để đánh. Space giữ để lấy lực, thả để đánh.</p><p class="setting-note">Luyện tập một người, bi vào theo thứ tự bất kỳ. Bi trắng vào lỗ sẽ tự đặt lại. Chưa có điều khiển xoáy hoặc luật thi đấu.</p></dialog>
+  <dialog id="help-dialog" aria-labelledby="help-title">${close}<p class="overline">CÁCH CHƠI</p><h2 id="help-title">Ngắm. Kéo. Thả.</h2><ol><li>Chạm hoặc nhấp lên mặt bàn để chọn hướng ngắm.</li><li>Kéo cây cơ ở mép phải từ trên xuống. Kéo càng xa, lực càng mạnh. Thả để đánh.</li><li>Kéo cơ lên lại vị trí ban đầu hoặc nhấn Escape để hủy cú đánh.</li><li>Ở góc 3D, giữ chuột phải để xoay nhẹ; bàn tự vừa màn hình, đã khóa phóng to/thu nhỏ. Mở menu ba gạch → Góc nhìn để chọn 3D, Từ trên hoặc Theo cơ.</li></ol><p class="setting-note">Bàn phím: ← → chỉnh hướng, Shift để chỉnh nhỏ. Khi chọn cây cơ bằng Tab, ↓ ↑ chỉnh lực và Enter để đánh. Space giữ để lấy lực, thả để đánh.</p><p class="setting-note">Luyện tập một người, bi vào theo thứ tự bất kỳ. Bi trắng vào lỗ sẽ tự đặt lại. Chọn điểm chạm trên quả bi cạnh thanh cơ: trên cu-lê, dưới trô, trái/phải ép phê. Chạm vào tâm quả bi để đặt lại điểm chạm.</p></dialog>
 `;
 
 let scene, drag = null, spaceStart = null, spaceFrame = null, power = 0, releasing = false;
-let match=null,lobby,matchHUD,mode='home';
-const canUserShoot=()=>mode==='practice'||mode==='match'&&!!match?.canHumanShoot;
+let match=null,lobby,matchHUD,training,mode='home';
+const spinControl=mountSpinControl($('#cue-control'),point=>{if(scene){scene.tip=point;scene.bridgeKey=null;}});
+const canUserShoot=()=>mode==='practice'||mode==='training'&&!!training?.canShoot||mode==='match'&&!!match?.canHumanShoot;
 const audio = new PoolAudio();
 const physics = new PoolPhysics(event => {
   match?.event(event);
+  training?.event(event);
   if(event.type==='pocket'&&match)matchHUD?.render(match);
   if (['shot', 'collision', 'cushion', 'pocket'].includes(event.type)) {
     const projection = scene?.project(event.x, event.z);
@@ -108,8 +115,8 @@ function renderState() {
   const disabled = !scene || !canUserShoot() || !physics.canShoot || releasing || !!scene.placingCue;
   $('#pull-cue').setAttribute('aria-disabled', String(disabled));
   $('#cue-control').classList.toggle('disabled', disabled);
+  spinControl.setEnabled(!disabled&&!drag&&spaceStart===null);
   $('#cue-instructions').textContent = physics.moving ? 'Đợi bi dừng' : count === total ? 'Mở menu · Ván mới' : 'Kéo xuống · Thả';
-  if (scene) scene.renderer.domElement.title = physics.canPlaceCue ? physics.hand?'Kéo bi trắng đến vị trí hợp lệ.':'Trước cú phá: kéo bi trắng sang hai bên dọc vạch bếp.' : 'Nhấp mặt bàn để ngắm. Kéo trên bàn để đổi góc nhìn.';
 }
 function setPower(value) {
   power = Math.min(1, Math.max(0, value));
@@ -132,6 +139,7 @@ function cancelPull() {
   drag = null; spaceStart = null; cancelAnimationFrame(spaceFrame);
   $('#cue-control').classList.remove('dragging'); setPower(0);
   if (!releasing) lockAim(false);
+  renderState();
 }
 function releaseShot() {
   const chosenPower = power;
@@ -143,8 +151,10 @@ function releaseShot() {
   setPower(0);
   const angle = scene.angle;
   const call=matchHUD?.getCall();
+  const tip=spinControl.point;
   scene.strike(chosenPower, () => {
-    if(match)match.shootHuman(angle,chosenPower,call);else physics.shoot(angle, chosenPower);
+    if(match)match.shootHuman(angle,chosenPower,call,tip);else physics.shoot(angle, chosenPower,tip);
+    spinControl.reset();
     releasing = false; lockAim(false); renderState();
     $('#cue-control').classList.remove('releasing');
   });
@@ -158,6 +168,7 @@ pull.addEventListener('pointerdown', event => {
   drag = { id: event.pointerId, y: event.clientY, x: event.clientX, travel: pullTravel(pull.clientHeight) };
   pull.setPointerCapture(event.pointerId); setPower(0); lockAim(true);
   $('#cue-control').classList.add('dragging');
+  spinControl.setEnabled(false);
 });
 pull.addEventListener('pointermove', event => {
   if (!drag || event.pointerId !== drag.id) return;
@@ -187,6 +198,7 @@ window.addEventListener('keydown', event => {
   if (event.code === 'Escape') { cancelPull(); return; }
   if (event.code === 'ArrowLeft' || event.code === 'ArrowRight') { event.preventDefault(); nudge(event.code === 'ArrowLeft' ? -1 : 1, event.shiftKey); }
   if (event.code === 'Space' && !event.repeat && physics.canShoot && !releasing && !drag && !scene?.placingCue) {
+    spinControl.setEnabled(false);
     event.preventDefault(); audio.unlock().catch(() => {}); spaceStart = performance.now(); lockAim(true);
     const charge = now => { if (spaceStart === null) return; setPower((now - spaceStart) / 1600); spaceFrame = requestAnimationFrame(charge); };
     spaceFrame = requestAnimationFrame(charge);
@@ -206,7 +218,7 @@ $('#menu-toggle').addEventListener('click', () => openDialog('#menu-dialog'));
 $('#settings-toggle').addEventListener('click', () => openDialog('#settings-dialog'));
 $('#menu-settings').addEventListener('click', () => openDialog('#settings-dialog'));
 $('#help').addEventListener('click', () => openDialog('#help-dialog'));
-$('#new-game').addEventListener('click', () => {if(match)goHome();else openDialog('#reset-dialog');});
+$('#new-game').addEventListener('click', () => {if(mode==='training'){closeDialogs();if(!releasing&&!physics.moving)training.open();}else if(match)goHome();else openDialog('#reset-dialog');});
 $('#exit-home').addEventListener('click',goHome);
 document.querySelectorAll('[data-close]').forEach(button => button.addEventListener('click', () => button.closest('dialog').close()));
 document.querySelectorAll('dialog').forEach(dialog => dialog.addEventListener('click', event => {
@@ -217,6 +229,7 @@ document.querySelectorAll('dialog').forEach(dialog => dialog.addEventListener('c
 document.querySelectorAll('[data-view]').forEach(button => button.addEventListener('click', () => {
   if (!scene || releasing || drag || scene.placingCue) return;
   scene.setView(button.dataset.view);
+  $('#menu-dialog').close();
   document.querySelectorAll('[data-view]').forEach(b => { b.classList.toggle('active', b === button); b.setAttribute('aria-pressed', String(b === button)); });
 }));
 document.querySelectorAll('[data-layout]').forEach(button => button.addEventListener('click', () => {
@@ -237,7 +250,7 @@ document.querySelectorAll('[data-cloth]').forEach(button => button.addEventListe
 setCloth(read('surface-v8', '') ? read('cloth', 'gray') : 'gray');
 save('surface-v8', '1');
 $('#guide').checked = read('guide', 'true') === 'true'; if (scene) scene.aimVisible = $('#guide').checked;
-$('#guide').addEventListener('change', e => { if (scene) scene.aimVisible = e.target.checked; save('guide', String(e.target.checked)); });
+$('#guide').addEventListener('change', e => { if (scene) scene.aimVisible = e.target.checked; if(mode==='training'&&e.target.checked)training.markAssisted(); save('guide', String(e.target.checked)); });
 $('#fullscreen').addEventListener('click', async () => {
   $('#menu-dialog').close();
   try { if (document.fullscreenElement) await document.exitFullscreen(); else await document.documentElement.requestFullscreen(); }
@@ -262,6 +275,8 @@ document.querySelectorAll('[data-audio]').forEach(input => input.addEventListene
 audio.loadManifest().then(renderAudio).catch(() => { $('#audio-status').textContent = 'Không tải được bản thu âm thanh. Bạn có thể chọn tệp bên dưới.'; });
 function closeDialogs(){document.querySelectorAll('dialog[open]').forEach(d=>d.close());}
 function renderMatch(m){
+  if(!m.canHumanShoot)spinControl.reset();
+  if(m.foulNotice){releasing=false;cancelPull();$('#cue-control').classList.remove('releasing');}
   matchHUD?.render(m);
   $('#menu-dialog .muted').textContent=`${m.config.game==='9'?'9-ball':'8-ball · 15 bi'} · Chạm ${m.config.target} · ${m.names[1]}`;
   if(scene){scene.inputLocked=!m.canHumanShoot;scene.showCue=m.phase==='lag-ready'||m.phase==='playing';scene.pocketLabels.visible=m.phase==='playing'&&m.config.game==='8'&&!m.breaking;}
@@ -269,17 +284,21 @@ function renderMatch(m){
 }
 function enterGame(){closeDialogs();$('#game').classList.toggle('match-layout',mode==='match');$('#game').hidden=false;if(scene){scene.suspended=false;scene.resize();scene.setView('top');document.querySelectorAll('[data-view]').forEach(b=>{b.classList.toggle('active',b.dataset.view==='top');b.setAttribute('aria-pressed',String(b.dataset.view==='top'));});}}
 function goHome(){
+  training?.close();$('#game').classList.remove('training-layout');
   match?.dispose();match=null;releasing=false;mode='home';cancelPull();closeDialogs();
   physics.reset();if(scene){scene.striking=null;scene.suspended=true;scene.followBall=false;scene.pocketLabels.visible=false;}
+  spinControl.reset();
   $('#game').hidden=true;matchHUD?.render(null);lobby?.show();
 }
 function startPractice(){
+  training?.close();$('#game').classList.remove('training-layout');
   $('#menu-dialog .muted').textContent='Người chơi tự do · Luyện tập 15 bi';
   $('#guide').checked=read('guide','true')==='true';
   match?.dispose();match=null;mode='practice';releasing=false;physics.reset('rack');enterGame();
   scene.angle=0;scene.inputLocked=false;scene.showCue=true;scene.ghostEnabled=true;scene.aimVisible=$('#guide').checked;scene.followBall=false;scene.pocketLabels.visible=false;scene.syncBalls(0);matchHUD.render(null);renderState();
 }
 function startMatch(config){
+  training?.close();$('#game').classList.remove('training-layout');
   if(!scene)throw new Error('Không mở được bàn 3D. Hãy bật tăng tốc đồ họa trong trình duyệt.');
   match?.dispose();match=null;mode='match';releasing=false;enterGame();
   scene.aimVisible=config.aid!=='none';scene.ghostEnabled=config.aid==='ghost';scene.followBall=false;
@@ -287,7 +306,15 @@ function startMatch(config){
   match=new PoolMatch(physics,scene,config,renderMatch);renderMatch(match);
 }
 matchHUD=mountMatchHUD({choose:action=>match?.choose(action),home:goHome});
-lobby=mountHomepage({startMatch,startPractice,goHome,settings:()=>openDialog('#settings-dialog'),help:()=>openDialog('#help-dialog')});
+if(scene)training=mountTraining({physics,scene,home:goHome,practice:startPractice,
+  changed:renderState,
+  isBusy:()=>releasing||physics.moving,
+  resetControls:()=>{cancelPull();spinControl.reset();},
+  setShot:shot=>{scene.angle=shot.angle;spinControl.setPoint(shot.tip);scene.guideKey=null;scene.bridgeKey=null;},
+  enter:()=>{match?.dispose();match=null;mode='training';releasing=false;lobby.root.hidden=true;$('#game').classList.add('training-layout');enterGame();scene.inputLocked=false;scene.showCue=true;scene.followBall=false;scene.pocketLabels.visible=false;matchHUD.render(null);},
+});
+function startTraining(){if(!training)return;goHome();lobby.root.hidden=true;training.open();}
+lobby=mountHomepage({startMatch,startPractice,startTraining,goHome,settings:()=>openDialog('#settings-dialog'),help:()=>openDialog('#help-dialog')});
 $('#help-dialog .setting-note:last-child').textContent='Chơi với máy: chọn 9-ball hoặc 8-ball, thi băng để giành quyền chọn người phá. 8-ball cần gọi bi và lỗ trước cú đánh; 9-ball phải chạm bi nhỏ nhất trước. Sau lỗi, kéo bi trắng đến vị trí hợp lệ. Tập luyện: đánh tự do, không tính thắng thua.';
 if(scene)scene.canInteract=canUserShoot;
 goHome();renderState();renderAudio();

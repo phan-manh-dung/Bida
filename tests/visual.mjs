@@ -15,12 +15,12 @@ try {
   });
   await page.waitForTimeout(200);
   await page.screenshot({ path: 'artifacts/pocket-detail-v2.png' });
-  await page.locator('[data-view="cue"]').click();
+  await page.locator('#menu-toggle').click(); await page.locator('[data-view="cue"]').click();
   await page.screenshot({ path: 'artifacts/cue-view-v2.png' });
-  await page.locator('[data-view="top"]').click();
+  await page.locator('#menu-toggle').click(); await page.locator('[data-view="top"]').click();
   await page.screenshot({ path: 'artifacts/top-view-v2.png' });
   for (const [width,height] of [[390,844],[844,390]]) {
-    await page.setViewportSize({ width,height }); await page.locator('[data-view="orbit"]').click();
+    await page.setViewportSize({ width,height }); await page.locator('#menu-toggle').click(); await page.locator('[data-view="orbit"]').click();
     await page.waitForTimeout(150);
     await page.screenshot({ path: `artifacts/${width}x${height}-orbit-v2.png` });
   }

@@ -1,8 +1,9 @@
 import './homepage.css';
 import './match-layout.css';
 import { LEVELS, TABLES, POCKET_NAMES, normalizeConfig, competitionRack, groupOf } from './match-rules.js';
+import { TURN_DURATION_MS } from './match.js';
 
-export function mountHomepage({startMatch,startPractice,goHome,settings,help}) {
+export function mountHomepage({startMatch,startPractice,startTraining,goHome,settings,help}) {
   const root=document.createElement('section');root.id='lobby';
   root.innerHTML=`
     <header class="lobby-header"><a class="brand" href="#home" aria-label="NOIR trang chủ">NOIR<span>BILLIARDS CLUB</span></a><span class="local-label"><i></i> Sẵn sàng vào bàn</span></header>
@@ -37,8 +38,11 @@ export function mountHomepage({startMatch,startPractice,goHome,settings,help}) {
         </aside>
       </form>
     </section>
-    <footer class="lobby-footer"><div><button id="home-settings">⚙ Cài đặt</button><button id="home-help">? Trợ giúp</button></div><span>9 FEET <i>·</i> 57,2 MM <i>·</i> NOIR</span></footer>`;
+    <footer class="lobby-footer"><div><button id="home-settings">⚙ Cài đặt</button><button id="home-help">? Trợ giúp</button></div><span>9 FEET <i>·</i> 65 MM <i>·</i> NOIR</span></footer>`;
   document.querySelector('#app').appendChild(root);
+  const trainingCard=document.createElement('button');trainingCard.id='training-start';trainingCard.className='mode-card';
+  trainingCard.innerHTML='<span class="mode-number">04 / HỌC CÙNG HLV</span><span class="mode-art practice-art" aria-hidden="true"><i class="lobby-ball white-ball"></i></span><span class="mode-title">Học từng thế bi ↗</span><span class="mode-description">Chọn bài, xem hướng dẫn và luyện lại.<br>Theo dõi tiến bộ qua từng đường cơ.</span><span class="mode-footer">THƯ VIỆN BÀI TẬP →</span>';
+  trainingCard.onclick=()=>startTraining();root.querySelector('.mode-grid').append(trainingCard);
   const q=s=>root.querySelector(s),form=q('#match-form');
   function opponents(){const level=LEVELS.find(l=>l.id===q('#ai-level').value);q('#ai-opponent').innerHTML=level.opponents.map(o=>`<option value="${o.id}">${o.name}</option>`).join('');q('#opponent-caption').textContent=`Người chơi 2 · ${level.label}`;}
   function rack(){const nine=q('#game-type').value==='9';q('#rack-type').innerHTML=nine?'<option value="nine-wpa">WPA hiện hành · bi 9 trên điểm cuối bàn</option><option value="nine-classic">Truyền thống · bi 1 trên điểm cuối bàn</option>':'<option value="eight">Tam giác · bi 8 ở giữa, hai góc khác nhóm</option>';preview();}
@@ -54,7 +58,7 @@ export function mountHomepage({startMatch,startPractice,goHome,settings,help}) {
   q('#practice-start').onclick=()=>{root.hidden=true;startPractice();};q('#home-settings').onclick=settings;q('#home-help').onclick=help;
   q('#ai-level').onchange=opponents;q('#game-type').onchange=rack;q('#rack-type').onchange=preview;
   q('#race-target').oninput=()=>q('#race-note').textContent=`Ai thắng ${q('#race-target').value||'…'} ván trước sẽ thắng trận.`;
-  const tableNote=()=>q('#table-note').textContent=`${TABLES[q('#table-type').value].description}. Tất cả là bàn 9 feet, bi 57,2 mm.`;
+  const tableNote=()=>q('#table-note').textContent=`${TABLES[q('#table-type').value].description}. Tất cả là bàn 9 feet, bi 65 mm.`;
   q('#table-type').onchange=tableNote;opponents();rack();tableNote();
   form.onsubmit=e=>{e.preventDefault();if(!form.reportValidity())return;
     try{const values=Object.fromEntries(new FormData(form));values.follow=false;const config=normalizeConfig(values);q('#setup-error').textContent='';root.hidden=true;startMatch(config);}catch(error){root.hidden=false;q('#setup-error').textContent=error.message;}
@@ -67,13 +71,41 @@ export function mountMatchHUD({callChanged,choose,home}) {
   const hud=document.createElement('section');hud.id='match-hud';hud.hidden=true;
   hud.innerHTML=`<div class="match-header"><div id="human-score" class="player-card"><div class="player-avatar"><svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#3b514c"/><path d="M12 64c0-23 40-23 40 0" fill="#c1b388"/><rect x="18" y="13" width="28" height="33" rx="14" fill="#e5bb91"/><path d="M24 27h3m10 0h3M27 36q5 4 10 0" stroke="#29333c" stroke-width="3" stroke-linecap="round" fill="none"/><path d="M17 25q-3-18 16-17 15 1 14 17l-8-10-20 10" fill="#282d32"/></svg></div><div class="player-info"><span class="score-name"></span><small></small></div><b class="player-score">0</b><div class="player-balls" aria-label="Bi đã vào lỗ"></div></div><span class="score-target"></span><div id="ai-score" class="player-card"><div class="player-avatar"><svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#342e58"/><path d="M12 64c0-23 40-23 40 0" fill="#ac97d0"/><rect x="18" y="13" width="28" height="33" rx="8" fill="#dfd8ee"/><path d="M24 27h3m10 0h3M27 36q5 4 10 0" stroke="#29333c" stroke-width="3" stroke-linecap="round" fill="none"/><path d="M32 13V7m-3 0h6" stroke="#c4b3e0" stroke-width="3"/></svg></div><div class="player-info"><span class="score-name"></span><small></small></div><b class="player-score">0</b><div class="player-balls" aria-label="Bi đã vào lỗ"></div></div></div><aside class="match-sidebar"><p id="match-status" role="status"></p><div id="match-decisions"></div><div id="shot-call"><label>Gọi bi <select id="called-ball"></select></label><label>Gọi lỗ <select id="called-pocket">${POCKET_NAMES.map((n,i)=>`<option value="${i}">${i+1} · ${n}</option>`).join('')}</select></label><label class="check-label"><input type="checkbox" id="safety-call" /> An toàn</label></div><label id="push-call" class="check-label"><input type="checkbox" id="push-out" /> Push out</label><p class="push-help" hidden>Ngay sau phá hợp lệ: bỏ yêu cầu chạm bi nhỏ nhất và chạm băng. Đối thủ được nhận hoặc trả lượt.</p></aside>`;
   document.querySelector('#game').appendChild(hud);
+  const target=hud.querySelector('.score-target'),scoreCentre=document.createElement('div');scoreCentre.className='match-score-centre';
+  target.replaceWith(scoreCentre);
+  const scoreLine=document.createElement('div');scoreLine.className='match-score-line';scoreLine.setAttribute('aria-live','polite');
+  const scoreNodes=[...hud.querySelectorAll('.player-score')];
+  scoreLine.append(scoreNodes[0],document.createTextNode(' - '),scoreNodes[1]);scoreCentre.append(scoreLine,target);
+  const nextRack=document.createElement('button');nextRack.id='next-rack';nextRack.className='next-rack';nextRack.textContent='Ván tiếp theo';nextRack.hidden=true;nextRack.onclick=()=>choose('next');hud.appendChild(nextRack);
+  const foulPopup=document.createElement('div');foulPopup.className='foul-popup';foulPopup.hidden=true;foulPopup.setAttribute('role','alert');hud.appendChild(foulPopup);
+  hud.querySelectorAll('.player-avatar').forEach(avatar=>{
+    avatar.insertAdjacentHTML('beforeend','<svg class="turn-clock" viewBox="0 0 56 56" aria-hidden="true"><rect class="clock-track" x="2" y="2" width="52" height="52" rx="13"/><rect class="clock-progress" x="2" y="2" width="52" height="52" rx="13" pathLength="100"/></svg><span class="turn-seconds"></span>');
+  });
+  let clockFrame=null;
+  function renderClock(m){
+    cancelAnimationFrame(clockFrame);clockFrame=null;
+    const active=!!m?.turnDeadline&&!m.disposed&&!m.foulNotice&&!m.physics.moving;
+    const remaining=active?Math.max(0,m.turnDeadline-performance.now()):0;
+    [hud.querySelector('#human-score'),hud.querySelector('#ai-score')].forEach((card,i)=>{
+      const running=active&&(m.phase==='lag-ready'?i===0:m.turn===i);
+      card.classList.toggle('clock-running',running);
+      card.querySelector('.clock-progress').style.strokeDashoffset=String(100*(1-remaining/TURN_DURATION_MS));
+      card.querySelector('.turn-seconds').textContent=running?`${Math.ceil(remaining/1000)}s`:'';
+      card.querySelector('.player-avatar').setAttribute('aria-label',running?`${m.names[i]}: còn ${Math.ceil(remaining/1000)} giây`:m?.names[i]||'');
+    });
+    if(active)clockFrame=requestAnimationFrame(()=>renderClock(m));
+  }
   const q=s=>hud.querySelector(s);
   const getCall=()=>({ball:Number(q('#called-ball').value),pocket:Number(q('#called-pocket').value),safety:q('#safety-call').checked,push:q('#push-out').checked});
   hud.addEventListener('change',()=>callChanged?.(getCall()));
   let stamp='';
-  function render(m){hud.hidden=!m;document.querySelector('#game').classList.toggle('foul-paused',!!m?.foulNotice);if(!m)return;
-    [q('#human-score'),q('#ai-score')].forEach((node,i)=>{node.querySelector('.score-name').textContent=m.names[i];node.querySelector('b').textContent=m.score[i];node.querySelector('small').textContent=m.groups[i]==='solid'?'Bi trơn':m.groups[i]==='stripe'?'Bi sọc':m.config.game==='9'?'9-ball':'Bàn mở';node.classList.toggle('your-turn',m.turn===i&&m.phase==='playing');});
+  function render(m){hud.hidden=!m;document.querySelector('#game').classList.toggle('foul-paused',!!m?.foulNotice);renderClock(m);if(!m)return;
+    [q('#human-score'),q('#ai-score')].forEach((node,i)=>{node.querySelector('.score-name').textContent=m.names[i];scoreNodes[i].textContent=m.score[i];node.querySelector('small').textContent=m.groups[i]==='solid'?'Bi trơn':m.groups[i]==='stripe'?'Bi sọc':m.config.game==='9'?'':'Bàn mở';node.classList.toggle('your-turn',m.turn===i&&m.phase==='playing');});
+    scoreLine.setAttribute('aria-label',`${m.names[0]} ${m.score[0]} - ${m.score[1]} ${m.names[1]}`);
+    nextRack.hidden=m.phase!=='rack-over';nextRack.disabled=!!m.foulNotice;
     q('.score-target').textContent=`CHẠM ${m.config.target}`;q('#match-status').textContent=m.message;q('#match-status').classList.toggle('is-foul',!!m.foulNotice);
+    q('#match-status').hidden=!!m.foulNotice||m.physics.moving||m.phase==='playing'||m.phase==='lag-running';
+    foulPopup.hidden=!m.foulNotice;foulPopup.textContent=m.foulNotice?m.message:'';
     const colors=['#e4ac18','#2468c0','#d63a35','#823fad','#ec7b20','#228e58','#863746','#141719'];
     [q('#human-score'),q('#ai-score')].forEach((card,player)=>{
       const ids=m.captured?.[player]||[],slots=Math.max(9,ids.length);
@@ -87,7 +119,6 @@ export function mountMatchHUD({callChanged,choose,home}) {
     const button=(label,action)=>{const b=document.createElement('button');b.className='match-action';b.textContent=label;b.disabled=!!m.foulNotice;b.onclick=()=>choose(action);decisions.appendChild(b);};
     if(m.phase==='lag-retry')button('Thi băng lại','retry');
     if(m.phase==='lag-choice'&&m.lagWinner===0){button('Tôi phá trước','take');button('Nhường máy phá','give');}
-    if(m.phase==='rack-over')button('Ván tiếp theo','next');
     if(m.phase==='match-over'){const b=document.createElement('button');b.className='match-action';b.textContent='Về trang chủ';b.onclick=home;decisions.appendChild(b);}
     if(m.phase==='choice'&&m.turn===0){
       if(m.choice==='illegal-eight'){button('Nhận bàn hiện tại','accept');button('Xếp lại, tôi phá','rerack-self');button('Cho máy phá lại','rerack-other');}

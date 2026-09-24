@@ -1,0 +1,515 @@
+{
+  "straight-short": [
+    {
+      "angle": 0.46399462766720745,
+      "power": 0.33,
+      "tip": {
+        "x": 0,
+        "y": 0
+      },
+      "label": "Đầu cơ ở tâm"
+    },
+    {
+      "angle": 0.46399462766720745,
+      "power": 0.405,
+      "tip": {
+        "x": 0,
+        "y": -0.65
+      },
+      "label": "Đầu cơ thấp"
+    },
+    {
+      "angle": 0.46399462766720745,
+      "power": 0.305,
+      "tip": {
+        "x": 0,
+        "y": 0.65
+      },
+      "label": "Đầu cơ cao"
+    },
+    {
+      "angle": 0.46399462766720745,
+      "power": 0.33,
+      "tip": {
+        "x": -0.55,
+        "y": 0
+      },
+      "label": "Ép phê trái",
+      "expanded": true
+    },
+    {
+      "angle": 0.46399462766720745,
+      "power": 0.33,
+      "tip": {
+        "x": 0.55,
+        "y": 0
+      },
+      "label": "Ép phê phải",
+      "expanded": true
+    }
+  ],
+  "straight-long": [
+    {
+      "angle": 0.46371661782525464,
+      "power": 0.405,
+      "tip": {
+        "x": 0,
+        "y": 0
+      },
+      "label": "Đầu cơ ở tâm"
+    },
+    {
+      "angle": 0.46371661782525464,
+      "power": 0.48,
+      "tip": {
+        "x": 0,
+        "y": -0.65
+      },
+      "label": "Đầu cơ thấp"
+    },
+    {
+      "angle": 0.46371661782525464,
+      "power": 0.355,
+      "tip": {
+        "x": 0,
+        "y": 0.65
+      },
+      "label": "Đầu cơ cao"
+    },
+    {
+      "angle": 0.46371661782525464,
+      "power": 0.405,
+      "tip": {
+        "x": -0.55,
+        "y": 0
+      },
+      "label": "Ép phê trái",
+      "expanded": true
+    },
+    {
+      "angle": 0.46371661782525464,
+      "power": 0.405,
+      "tip": {
+        "x": 0.55,
+        "y": 0
+      },
+      "label": "Ép phê phải",
+      "expanded": true
+    }
+  ],
+  "cut-gentle": [
+    {
+      "angle": 0.226218140817461,
+      "power": 0.38,
+      "tip": {
+        "x": 0,
+        "y": 0
+      },
+      "label": "Đầu cơ ở tâm"
+    },
+    {
+      "angle": 0.226218140817461,
+      "power": 0.455,
+      "tip": {
+        "x": 0,
+        "y": -0.65
+      },
+      "label": "Đầu cơ thấp"
+    },
+    {
+      "angle": 0.226218140817461,
+      "power": 0.33,
+      "tip": {
+        "x": 0,
+        "y": 0.65
+      },
+      "label": "Đầu cơ cao"
+    },
+    {
+      "angle": 0.226218140817461,
+      "power": 0.38,
+      "tip": {
+        "x": -0.55,
+        "y": 0
+      },
+      "label": "Ép phê trái",
+      "expanded": true
+    },
+    {
+      "angle": 0.226218140817461,
+      "power": 0.38,
+      "tip": {
+        "x": 0.55,
+        "y": 0
+      },
+      "label": "Ép phê phải",
+      "expanded": true
+    },
+    {
+      "angle": 0.4413492358755878,
+      "power": 0.83,
+      "tip": {
+        "x": 0,
+        "y": 0
+      },
+      "pocket": 2,
+      "bank": true,
+      "expanded": true,
+      "label": "Thử đường một băng"
+    }
+  ],
+  "cut-left": [
+    {
+      "angle": -2.6002543082410243,
+      "power": 0.405,
+      "tip": {
+        "x": 0,
+        "y": 0
+      },
+      "label": "Đầu cơ ở tâm"
+    },
+    {
+      "angle": -2.6002543082410243,
+      "power": 0.48,
+      "tip": {
+        "x": 0,
+        "y": -0.65
+      },
+      "label": "Đầu cơ thấp"
+    },
+    {
+      "angle": -2.6002543082410243,
+      "power": 0.355,
+      "tip": {
+        "x": 0,
+        "y": 0.65
+      },
+      "label": "Đầu cơ cao"
+    },
+    {
+      "angle": -2.6002543082410243,
+      "power": 0.405,
+      "tip": {
+        "x": -0.55,
+        "y": 0
+      },
+      "label": "Ép phê trái",
+      "expanded": true
+    },
+    {
+      "angle": -2.6002543082410243,
+      "power": 0.405,
+      "tip": {
+        "x": 0.55,
+        "y": 0
+      },
+      "label": "Ép phê phải",
+      "expanded": true
+    }
+  ],
+  "cut-thin": [
+    {
+      "angle": -0.5891420899566095,
+      "power": 0.405,
+      "tip": {
+        "x": 0,
+        "y": 0
+      },
+      "label": "Đầu cơ ở tâm"
+    },
+    {
+      "angle": -0.5891420899566095,
+      "power": 0.48,
+      "tip": {
+        "x": 0,
+        "y": -0.65
+      },
+      "label": "Đầu cơ thấp"
+    },
+    {
+      "angle": -0.5891420899566095,
+      "power": 0.355,
+      "tip": {
+        "x": 0,
+        "y": 0.65
+      },
+      "label": "Đầu cơ cao"
+    },
+    {
+      "angle": -0.5891420899566095,
+      "power": 0.405,
+      "tip": {
+        "x": -0.55,
+        "y": 0
+      },
+      "label": "Ép phê trái",
+      "expanded": true
+    },
+    {
+      "angle": -0.5891420899566095,
+      "power": 0.405,
+      "tip": {
+        "x": 0.55,
+        "y": 0
+      },
+      "label": "Ép phê phải",
+      "expanded": true
+    }
+  ],
+  "side-pocket": [
+    {
+      "angle": -1.01278772045309,
+      "power": 0.355,
+      "tip": {
+        "x": 0,
+        "y": 0
+      },
+      "label": "Đầu cơ ở tâm"
+    },
+    {
+      "angle": -1.01278772045309,
+      "power": 0.43,
+      "tip": {
+        "x": 0,
+        "y": -0.65
+      },
+      "label": "Đầu cơ thấp"
+    },
+    {
+      "angle": -1.01278772045309,
+      "power": 0.305,
+      "tip": {
+        "x": 0,
+        "y": 0.65
+      },
+      "label": "Đầu cơ cao"
+    },
+    {
+      "angle": -1.01278772045309,
+      "power": 0.355,
+      "tip": {
+        "x": -0.55,
+        "y": 0
+      },
+      "label": "Ép phê trái",
+      "expanded": true
+    },
+    {
+      "angle": -1.01278772045309,
+      "power": 0.355,
+      "tip": {
+        "x": 0.55,
+        "y": 0
+      },
+      "label": "Ép phê phải",
+      "expanded": true
+    }
+  ],
+  "near-rail": [
+    {
+      "angle": 0.44428765128042136,
+      "power": 0.38,
+      "tip": {
+        "x": 0,
+        "y": 0
+      },
+      "label": "Đầu cơ ở tâm"
+    },
+    {
+      "angle": 0.44428765128042136,
+      "power": 0.455,
+      "tip": {
+        "x": 0,
+        "y": -0.65
+      },
+      "label": "Đầu cơ thấp"
+    },
+    {
+      "angle": 0.44428765128042136,
+      "power": 0.33,
+      "tip": {
+        "x": 0,
+        "y": 0.65
+      },
+      "label": "Đầu cơ cao"
+    },
+    {
+      "angle": 0.44428765128042136,
+      "power": 0.38,
+      "tip": {
+        "x": -0.55,
+        "y": 0
+      },
+      "label": "Ép phê trái",
+      "expanded": true
+    },
+    {
+      "angle": 0.44428765128042136,
+      "power": 0.38,
+      "tip": {
+        "x": 0.55,
+        "y": 0
+      },
+      "label": "Ép phê phải",
+      "expanded": true
+    }
+  ],
+  "near-pocket": [
+    {
+      "angle": 0.462011584366925,
+      "power": 0.33,
+      "tip": {
+        "x": 0,
+        "y": 0
+      },
+      "label": "Đầu cơ ở tâm"
+    },
+    {
+      "angle": 0.462011584366925,
+      "power": 0.405,
+      "tip": {
+        "x": 0,
+        "y": -0.65
+      },
+      "label": "Đầu cơ thấp"
+    },
+    {
+      "angle": 0.462011584366925,
+      "power": 0.28,
+      "tip": {
+        "x": 0,
+        "y": 0.65
+      },
+      "label": "Đầu cơ cao"
+    },
+    {
+      "angle": 0.462011584366925,
+      "power": 0.33,
+      "tip": {
+        "x": -0.55,
+        "y": 0
+      },
+      "label": "Ép phê trái",
+      "expanded": true
+    },
+    {
+      "angle": 0.462011584366925,
+      "power": 0.33,
+      "tip": {
+        "x": 0.55,
+        "y": 0
+      },
+      "label": "Ép phê phải",
+      "expanded": true
+    }
+  ],
+  "stop": [
+    {
+      "angle": 0.46393959588119116,
+      "power": 0.505,
+      "tip": {
+        "x": 0,
+        "y": -0.65
+      },
+      "label": "Đầu cơ thấp"
+    },
+    {
+      "angle": 0.46393959588119116,
+      "power": 0.305,
+      "tip": {
+        "x": 0,
+        "y": 0.65
+      },
+      "label": "Đầu cơ cao"
+    }
+  ],
+  "draw": [
+    {
+      "angle": 0.46408604802026654,
+      "power": 0.505,
+      "tip": {
+        "x": 0,
+        "y": -0.9
+      },
+      "label": "Đầu cơ thấp"
+    },
+    {
+      "angle": 0.46408604802026654,
+      "power": 0.555,
+      "tip": {
+        "x": 0,
+        "y": -0.65
+      },
+      "label": "Đầu cơ thấp"
+    }
+  ],
+  "follow": [
+    {
+      "angle": 0.46385215059523394,
+      "power": 0.33,
+      "tip": {
+        "x": 0,
+        "y": 0.65
+      },
+      "label": "Đầu cơ cao"
+    },
+    {
+      "angle": 0.46385215059523394,
+      "power": 0.305,
+      "tip": {
+        "x": 0,
+        "y": 0.9
+      },
+      "label": "Đầu cơ cao"
+    }
+  ],
+  "bank": [
+    {
+      "angle": -1.0306052441197602,
+      "power": 0.755,
+      "tip": {
+        "x": 0,
+        "y": 0
+      },
+      "label": "Đầu cơ ở tâm"
+    },
+    {
+      "angle": -1.0306052441197602,
+      "power": 0.755,
+      "tip": {
+        "x": 0,
+        "y": -0.65
+      },
+      "label": "Đầu cơ thấp"
+    },
+    {
+      "angle": -1.0306052441197602,
+      "power": 0.755,
+      "tip": {
+        "x": 0,
+        "y": 0.65
+      },
+      "label": "Đầu cơ cao"
+    },
+    {
+      "angle": -1.0306052441197602,
+      "power": 0.755,
+      "tip": {
+        "x": -0.55,
+        "y": 0
+      },
+      "label": "Ép phê trái",
+      "expanded": true
+    },
+    {
+      "angle": -1.0306052441197602,
+      "power": 0.755,
+      "tip": {
+        "x": 0.55,
+        "y": 0
+      },
+      "label": "Ép phê phải",
+      "expanded": true
+    }
+  ]
+}

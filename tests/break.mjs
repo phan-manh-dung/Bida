@@ -11,7 +11,7 @@ try {
  assert.equal(await page.evaluate(()=>window.__noir.physics.layout),'rack');
  assert.equal(await page.evaluate(()=>window.__noir.scene.ballShadows.size),0);
  assert.equal(await page.evaluate(()=>window.__noir.scene.scene.getObjectByName('table-markings').children.length),3);
- await page.locator('[data-view="top"]').click();
+ await page.locator('#menu-toggle').click(); await page.locator('[data-view="top"]').click();
  await page.waitForTimeout(150);
  const project=z=>page.evaluate(z=>{const {physics:p,scene:s}=window.__noir;return s.project(p.cueBall.x,z,.035+.099);},z);
  const start=await project(0),end=await project(1.1);
@@ -41,7 +41,7 @@ try {
  const touch=await mobile.newPage();touch.on('pageerror',e=>errors.push(e.message));
  await touch.goto(baseURL,{waitUntil:'networkidle'});
   await touch.locator('#practice-start').click();await touch.waitForFunction(()=>window.__noir?.scene);
- await touch.locator('[data-view="top"]').click();
+ await touch.locator('#menu-toggle').click(); await touch.locator('[data-view="top"]').click();
  await touch.waitForTimeout(150);
  const points=await touch.evaluate(()=>{const {physics:p,scene:s}=window.__noir;return [0,.8].map(z=>s.project(p.cueBall.x,z,.134));});
  const cdp=await mobile.newCDPSession(touch);
