@@ -4,7 +4,7 @@ const browser=await chromium.launch({channel:'chrome',headless:true});
 try{
  const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto('http://127.0.0.1:5173/',{waitUntil:'networkidle'});
- await page.locator('#training-start').click();await page.locator('[data-lesson="cut-gentle"]').click();
+ await page.locator('#practice-start').click();await page.locator('#training-start').click();await page.locator('[data-lesson="cut-gentle"]').click();
  await page.locator('#training-library [data-hand="left"]').click();
  assert.equal(await page.evaluate(()=>localStorage.getItem('noir:training:hand')),'left');
  const leftFoot=await page.evaluate(()=>window.__noir.scene.scene.getObjectByName('training-stance-1').position.toArray());

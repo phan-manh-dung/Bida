@@ -9,7 +9,7 @@ try {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(process.env.BASE_URL || 'http://127.0.0.1:5173/', { waitUntil: 'networkidle' });
-  await page.locator('#practice-start').click();
+  await page.locator('#practice-start').click();await page.locator('#free-practice-start').click();
   const camera = () => page.evaluate(() => window.__noir.scene.camera.position.toArray());
   for (const view of ['top', 'orbit', 'cue']) {
     await page.locator('#menu-toggle').click(); await page.locator(`[data-view="${view}"]`).click();

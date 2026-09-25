@@ -1,6 +1,7 @@
 // Original layouts for NOIR, informed by the linked skill references.
 // Stable IDs are also progress keys. Add lessons here without changing the UI.
 export const SOURCES = [
+  {title:'Dr. Dave — chiều xoáy và cách dùng ép phê ngang',url:'https://drdavepoolinfo.com/tutorial/sidespin/'},
   {title:'Dr. Dave — cu-lê, trô và tác động ép phê ngang',url:'https://drdavepoolinfo.com/faq/follow/accuracy/'},
   {title:'Billiard University — nhóm kỹ năng',url:'https://billiarduniversity.org/resources/learning/'},
   {title:'Dr. Dave — ngắm bằng bi ảo',url:'https://drdavepoolinfo.com/faq/aiming/ghost-ball/'},

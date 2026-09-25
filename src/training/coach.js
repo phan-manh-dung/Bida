@@ -18,9 +18,9 @@ export function describeShot(lesson,shot,preview){
  let tip=nearRail?'Bi gần băng không có nghĩa là luôn cắt mỏng. Ở phương án này, nhìn phần chồng hai bi bên dưới để biết chạm dày hay mỏng; giữ đúng đường vào cửa lỗ.':nearPocket?'Bi đã gần cửa lỗ. Hãy để ý đường xanh của bi cái: vào được bi mục tiêu nhưng bi trắng rơi theo vẫn là lỗi.':overlap<.38?'Cắt mỏng là chỉ chạm một phần nhỏ bên mép bi. Nếu không vào, hãy chỉnh hướng một chút trước; tăng lực không sửa được hướng ngắm sai.':'“Chạm dày” nghĩa là bi trắng che nhiều phần bi vàng khi nhìn dọc đường cơ. Không cần ép phê ngang chỉ để cắt bi.';
  if(effective.bank)tip='Đường vàng chạm băng trước rồi mới tới lỗ. Hãy giữ đúng cả lực mẫu: đổi lực có thể làm điểm bật băng thay đổi.';
  const spinNote=Math.abs(shot.tip.x)>.1?(rails?'Phương án có ép phê ngang: theo đường xanh để xem bi cái đổi hướng khi chạm băng.':'Cú này bi cái không chạm băng. Ép phê ngang chưa tạo lợi ích rõ trong mô phỏng hiện tại; ưu tiên phương án tâm để dễ tập hơn.') : shot.tip.y<-.1?'Đặt thấp tạo xoáy lùi ban đầu. Bi có lùi thật sau va chạm hay không còn phụ thuộc lực và quãng đường tới bi vàng.':shot.tip.y>.1?'Đặt cao tạo xoáy tiến. Quan sát vùng dừng xanh để tránh đánh mạnh khiến bi cái chạy quá xa.':'Bắt đầu với đầu cơ ở tâm để bớt một thao tác. Lực vẫn quyết định bi trắng sẽ đi xa bao nhiêu.';
- return {effective,overlap,angle,side,along,thickness,tip,tipWords,spinNote,rails,distance,zone,
+ return {effective,target:lesson.target,overlap,angle,side,along,thickness,tip,tipWords,spinNote,rails,distance,zone,
   finish:`Bi cái ${rails?`chạm băng ${rails} lần rồi `:''}dừng ở ${zone}. Cách điểm chạm khoảng ${Math.round(distance)} cm.`,
-  title:shot.bank?'Một băng':shot.pocket!==undefined&&shot.pocket!==lesson.pocket?'Đổi lỗ':Math.abs(shot.tip.x)>.1?(shot.tip.x<0?'Ép phê trái':'Ép phê phải'):shot.tip.y<-.1?'Đầu cơ thấp':shot.tip.y>.1?'Đầu cơ cao':'Tâm bi · thử trước',
+  title:[shot.bank?'Một băng':null,Math.abs(shot.tip.x)>.1?`${shot.tip.y>.1?'Cu-lê':shot.tip.y<-.1?'Trô':'Ép phê'} ${shot.tip.x<0?'trái':'phải'}`:shot.tip.y<-.1?'Đầu cơ thấp':shot.tip.y>.1?'Đầu cơ cao':'Tâm bi'].filter(Boolean).join(' · '),
  };
 }
 const f=n=>Number(n.toFixed(2));
@@ -31,7 +31,7 @@ export function contactDiagram(info){
  <text x="12" y="18" fill="#bdcece">NHÌN TỪ TRÊN · PHÓNG TO</text>
  <path d="M ${gx} 182 V ${gy}" stroke="#8aead5" stroke-width="3" stroke-dasharray="5 4"/>
  <path d="M ${ox} ${oy} l ${f(info.side*38)} ${f(-info.along*38)}" stroke="#ffd379" stroke-width="3"/>
- <circle cx="${f(ox)}" cy="${f(oy)}" r="${r}" fill="#e8b637"/><text x="${f(ox)}" y="${f(oy+5)}" text-anchor="middle" fill="#17222a" font-size="17">1</text>
+ <circle cx="${f(ox)}" cy="${f(oy)}" r="${r}" fill="#e8b637"/><text x="${f(ox)}" y="${f(oy+5)}" text-anchor="middle" fill="#17222a" font-size="17">${info.target}</text>
  <circle cx="${gx}" cy="${gy}" r="${r}" fill="#eff9f518" stroke="#eff9f5" stroke-width="2" stroke-dasharray="5 3"/>
  <circle cx="${gx}" cy="${gy}" r="3" fill="#fff"/>
  <path d="M ${gx+7} ${gy} H 213" stroke="#eff9f5"/>

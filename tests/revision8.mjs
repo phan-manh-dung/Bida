@@ -4,7 +4,7 @@ const browser=await chromium.launch({channel:'chrome',headless:true});
 try {
  const page=await browser.newPage({viewport:{width:1440,height:900}});
  await page.goto(process.env.BASE_URL||'http://127.0.0.1:5173/',{waitUntil:'networkidle'});
-  await page.locator('#practice-start').click();
+  await page.locator('#practice-start').click();await page.locator('#free-practice-start').click();
  assert.equal(await page.locator('[data-cloth="gray"]').getAttribute('aria-pressed'),'true');
  await page.screenshot({path:'artifacts/gray-v8.png'});
  const result=await page.evaluate(()=>{

@@ -1,0 +1,56 @@
+import {chromium} from 'playwright';
+import assert from 'node:assert/strict';
+const browser=await chromium.launch({channel:'chrome',headless:true});
+try{
+ const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];
+ page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('http://127.0.0.1:5173/',{waitUntil:'networkidle'});
+ assert.equal(await page.locator('#lobby #training-start').count(),0);
+ await page.locator('#practice-start').click();
+ assert.equal(await page.locator('#training-start').isVisible(),true);
+ await page.locator('#custom-training-start').click();
+ assert.equal(await page.locator('[data-ready]').isDisabled(),true);
+ await page.locator('#training-panel [data-hand="left"]').click();
+ assert.equal(await page.locator('#pull-cue').getAttribute('aria-disabled'),'true');
+ const pos=async(x,z)=>page.evaluate(({x,z})=>window.__noir.scene.project(x,z),{x,z});
+ await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+ let p=await pos(.4,.2);await page.mouse.click(p.x,p.y);
+ assert.ok(Math.abs(await page.evaluate(()=>window.__noir.physics.cueBall.x)-.4)<.05);
+ await page.locator('[data-add]').click();await page.locator('[data-add]').click();
+ assert.equal(await page.locator('#custom-ball option').count(),4);
+ await page.locator('#custom-ball').selectOption('0');
+ p=await pos(2.7,1.1);await page.mouse.click(p.x,p.y);
+ assert.match(await page.locator('[data-custom-status]').innerText(),/không/);
+ await page.locator('[data-ready]').click();
+ const before=await page.evaluate(()=>window.__noir.physics.balls.filter(b=>!b.pocketed).map(({id,x,z})=>({id,x,z})));
+ await page.locator('[data-analyse]').click();
+ await page.waitForFunction(()=>!!document.querySelector('#training-variant')||document.querySelector('[data-custom-status]')?.textContent.includes('Chưa tìm'),{},{timeout:90000});
+ assert.ok(await page.locator('#training-variant').count(),'Find verified options for an open layout with extra balls');
+ await page.screenshot({path:'artifacts/custom-training-coach.png'});
+ assert.deepEqual(await page.evaluate(()=>window.__noir.physics.balls.filter(b=>!b.pocketed).map(({id,x,z})=>({id,x,z}))),before,'Search must not modify live layout');
+ await page.locator('[data-execute]').click();
+ assert.equal(await page.evaluate(()=>window.__noir.physics.shots),0);
+ const shot=await page.evaluate(async()=>{
+   // Use the same selected direction/tip as preparation, with the displayed force.
+   const text=document.querySelector('.coach-placement svg').textContent;
+   return {angle:window.__noir.scene.angle,tip:window.__noir.scene.tip,power:Number(text.match(/Lực ([\d.]+)%/)[1])/100};
+ });
+ await page.evaluate(shot=>window.__noir.physics.shoot(shot.angle,shot.power,shot.tip),shot);
+ await page.evaluate(()=>{const p=window.__noir.physics;for(let i=0;i<3600&&p.moving;i++)p.update(1/120);});
+ assert.equal(await page.locator('#training-result').isVisible(),true);
+ await page.locator('[data-retry]').click();
+ assert.deepEqual(await page.evaluate(()=>window.__noir.physics.balls.filter(b=>!b.pocketed).map(({id,x,z})=>({id,x,z}))),before);
+ await page.evaluate(shot=>{const p=window.__noir.physics;p.shoot(shot.angle,shot.power,shot.tip);for(let i=0;i<3600&&p.moving;i++)p.update(1/120);},shot);
+ const remaining=await page.evaluate(()=>window.__noir.physics.balls.filter(b=>!b.pocketed).map(({id,x,z})=>({id,x,z})));
+ await page.locator('[data-continue]').click();
+ assert.deepEqual(await page.evaluate(()=>window.__noir.physics.balls.filter(b=>!b.pocketed).map(({id,x,z})=>({id,x,z}))),remaining,'Continue preserves the new layout');
+ assert.equal(await page.locator('#training-variant').count(),0,'Prior suggestions must not survive a changed layout');
+ await page.locator('[data-edit]').click();await page.locator('[data-ready]').click();await page.locator('[data-analyse]').click();
+ await page.locator('[data-cancel]').click();
+ assert.equal(await page.locator('#pull-cue').getAttribute('aria-disabled'),'false');
+ await page.locator('[data-back]').click();assert.equal(await page.locator('#custom-training-start').isVisible(),true);
+ await page.setViewportSize({width:390,height:844});await page.locator('#custom-training-start').click();
+ assert.equal(await page.locator('[data-ready]').isVisible(),true);
+ await page.screenshot({path:'artifacts/custom-training-mobile.png'});
+ assert.deepEqual(errors,[]);console.log('PASS custom training: navigation, placement, overlap rejection, multiple balls, worker search, manual preparation, retry, cancellation and mobile');
+}finally{await browser.close();}

@@ -1,5 +1,11 @@
 # Học cùng HLV
 
+Lối vào: **Tập luyện → Học từng thế bi / Tự đặt thế bi & HLV / Bàn tập tự do**.
+
+`custom.js` quản lý bàn tự đặt: chọn bi rồi chạm mặt bàn, thêm/xóa tối đa 15 bi màu, chọn bi mục tiêu, tự đánh, thử lại hoặc đánh tiếp từ vị trí mới. Bi cái không được xóa. `custom-solver.js` kiểm tra tọa độ và tìm các cú mẫu; `custom-worker.js` chạy tìm kiếm ngoài luồng giao diện, hủy khi sửa thế bi hoặc thoát. Giới hạn 1.800 lần mô phỏng, tối đa 8 gợi ý: đánh trực tiếp và một nhóm đường một băng qua băng dài. Mọi bi cản đều tham gia vật lý. Chỉ công bố cú đã chạm bi mục tiêu trước, vào đúng lỗ, không scratch/off-table và đã dừng. Chưa tìm ra không có nghĩa thế bi vô nghiệm; chưa giải tổ hợp, đá nhiều băng hoặc lập kế hoạch cả lượt.
+
+`stance.js` dùng chung cho bài mẫu và thế bi tùy chỉnh: gợi ý vị trí đứng theo hướng cơ/tay cầm, giải thích chiều xoáy nhìn từ trên xuống và tác động khi chạm băng. Gợi ý tư thế chưa mô phỏng hình thể/tầm với người thật. Kiểm thử: `npm run test:custom-training`.
+
 Luồng thao tác: trước cú đánh có **Thực hiện**, **Tự đánh**, **Bài tiếp**. Thực hiện gọi `prepareShot(shot)` để đặt hướng và điểm đầu cơ theo phương án đã chọn, lực về 0; không tự đánh. Người chơi tự kéo lực và thả cơ. Khi bi dừng, chỉ hiện **Thử lại** (xếp lại thế bi) và **Thoát** (về thư viện bài tập). Đã bỏ phần mở rộng so sánh và phát thử trên sơ đồ khỏi giao diện; các cách đánh vẫn chọn bằng danh sách.
 
 Giao diện hiện tại gộp điểm ngắm, phần chồng hai bi, hình đặt đầu cơ/lực và mẹo ngắn vào cùng một thẻ. Không còn ba tab hướng dẫn. `options.js` sắp xếp bản sao danh sách theo độ phức tạp thao tác, giữ nguyên lời giải và ID bài; cách đơn giản nhất trong bài được gắn “Tập sự · thử trước”, không khẳng định đây là thống kê mức phổ biến ngoài đời. Phần so sánh/chạy sơ đồ nằm trong mục mở rộng. Dấu dừng bi cái trên bàn nhấp nháy chậm bằng callback render, tôn trọng reduced-motion và được hủy cùng overlay khi đánh, tự tập hoặc rời bài.

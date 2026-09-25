@@ -9,6 +9,8 @@
     "preview": "vite preview --host 127.0.0.1",
     "test": "node --test tests/physics.test.js tests/match.test.js tests/training.test.js",
     "test:training": "node tests/training-browser.mjs",
+    "test:custom-training": "node tests/custom-training.mjs",
+    "test:cue-camera": "node tests/cue-camera.mjs",
     "training:calibrate": "node scripts/calibrate-training.mjs",
     "training:expand": "node scripts/expand-training.mjs",
     "test:homepage": "node tests/homepage.mjs",

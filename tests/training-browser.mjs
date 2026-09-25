@@ -4,7 +4,7 @@ const browser=await chromium.launch({channel:'chrome',headless:true});
 try{
  const page=await browser.newPage({viewport:{width:1440,height:900}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto('http://127.0.0.1:5173/',{waitUntil:'networkidle'});
- await page.locator('#training-start').click();assert.equal(await page.locator('.lesson-card').count(),12);
+ await page.locator('#practice-start').click();await page.locator('#training-start').click();assert.equal(await page.locator('.lesson-card').count(),12);
  await page.screenshot({path:'artifacts/training-library.png'});
  await page.locator('[data-lesson="straight-short"]').click();
  await page.locator('#training-library [data-hand="right"]').click();
@@ -41,7 +41,7 @@ try{
  assert.equal(await page.evaluate(()=>window.__noir.scene.inputLocked),false);
  await page.locator('[data-save]').click();await page.locator('[data-library]').click();
  await page.locator('#training-filter').selectOption('saved');assert.equal(await page.locator('.lesson-card').count(),1);
- await page.reload({waitUntil:'networkidle'});await page.locator('#training-start').click();
+ await page.reload({waitUntil:'networkidle'});await page.locator('#practice-start').click();await page.locator('#training-start').click();
  assert.ok((await page.locator('[data-lesson="straight-short"]').innerText()).includes('✓'));
  await page.locator('[data-lesson="bank"]').click();
  for(const size of [{width:390,height:844},{width:844,height:390}]){

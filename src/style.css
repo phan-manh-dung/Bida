@@ -131,3 +131,12 @@ li { padding-left: 5px; margin-bottom: 14px; }
   .camera-button { height: 28px; width: 34px; }
 }
 @media(prefers-reduced-motion:reduce) { * { transition: none !important; } }
+.cue-camera-tools{position:absolute;z-index:5;bottom:14px;left:50%;transform:translateX(-50%);width:max-content;max-width:calc(100% - 20px);padding:8px;border:1px solid #ffffff25;border-radius:12px;background:#14232def;color:#d7e8e6;text-align:center}
+.cue-camera-tools>div{display:flex;justify-content:center;gap:5px;flex-wrap:wrap}
+.cue-camera-tools button{min-width:36px;min-height:36px;padding:6px 10px;border:1px solid #ffffff30;border-radius:8px;background:#29414b;color:#fff;font-size:16px;cursor:pointer;touch-action:manipulation}
+.cue-camera-tools button[data-camera="reset"]{font-size:12px;background:#9bd8c4;color:#122c27}
+.cue-camera-tools button[data-camera="high"]{font-size:12px}
+.cue-camera-tools button[data-camera="contact"]{font-size:12px}.cue-camera-tools button[aria-pressed="true"]{background:#4fe5ff;color:#122c27}
+.contact-aid-note{max-width:520px;white-space:normal;font-size:11px;line-height:1.45;margin:7px auto 0;color:#d9f5f8}
+.cue-camera-tools button:disabled{opacity:.45;cursor:default}.cue-camera-tools small{display:block;font-size:10px;margin-top:6px;line-height:1.4}
+@media(max-width:600px){.cue-camera-tools{bottom:6px;padding:5px}.cue-camera-tools button{min-width:30px;min-height:32px;padding:4px 7px}.cue-camera-tools small{font-size:9px}}

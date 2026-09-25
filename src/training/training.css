@@ -18,7 +18,7 @@
 #game.training-layout #scene{position:absolute;left:330px;right:105px;top:0;bottom:0}
 @media(max-width:800px){#training-panel{top:72px;left:10px;width:230px;padding:12px}#game.training-layout #scene{left:265px;right:95px}}
 @media(max-width:600px){#training-panel{left:10px;right:10px;top:auto;bottom:10px;width:auto;max-height:230px}#game.training-layout #scene{left:0;right:80px;bottom:250px;top:55px}.training-layout #cue-control{top:80px;bottom:335px;height:auto;transform:none}.training-layout #pull-cue{height:100%}.training-layout .spin-control{width:48px;height:48px;top:calc(100% + 8px);right:0}}
-@media(min-width:1100px){#lobby .mode-grid{grid-template-columns:repeat(4,minmax(0,1fr))}#lobby .mode-title{font-size:24px}}
+@media(min-width:1100px){#lobby .mode-grid{grid-template-columns:repeat(3,minmax(0,1fr))}#lobby .mode-title{font-size:24px}}
 @media(max-height:500px) and (min-width:601px){#training-panel{top:65px;max-height:calc(100dvh - 75px)}}
 
 /* Coach lessons: one visual instruction at a time, with explicit comparisons. */

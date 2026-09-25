@@ -19,6 +19,6 @@ export function suggestStance(lesson,shot,hand='right',wide=false){
 
 export function spinExplanation(tip){
   const vertical=tip.y>.1?'Cu-lê tạo xoáy tiến: bi cái có xu hướng đi tiếp sau va chạm.':tip.y<-.1?'Trô tạo xoáy lùi: bi cái có thể kéo về sau va chạm nếu còn đủ xoáy.':'Đặt ngang tâm: tập trung giữ hướng và lực; bi vẫn có thể lăn tiến trước khi chạm bi mục tiêu.';
-  const horizontal=Math.abs(tip.x)>.1?` Ép phê ${tip.x<0?'trái':'phải'} thêm xoáy ngang, làm thay đổi góc bật khi bi cái chạm băng; không có nghĩa bi tự chạy sang ${tip.x<0?'trái':'phải'}.`:'';
+  const horizontal=Math.abs(tip.x)>.1?` Ép phê ${tip.x<0?'trái':'phải'}: nhìn từ trên xuống, bi xoay ${tip.x<0?'cùng':'ngược'} chiều kim đồng hồ quanh trục đứng. Xoáy ngang làm thay đổi góc bật băng; không có nghĩa bi tự chạy sang ${tip.x<0?'trái':'phải'}. Nếu đánh vuông góc vào băng phía trước, bi bật lệch về bên ${tip.x<0?'trái':'phải'} của người đánh so với cú không ép phê. Với góc vào băng khác, xem đường xanh của cú mẫu.`:'';
   return vertical+horizontal+' Kết quả còn tùy lực, góc chạm và quãng đường. Trái/phải tính khi nhìn dọc cơ.';
 }

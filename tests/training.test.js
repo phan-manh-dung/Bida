@@ -8,6 +8,24 @@ import {readProgress,recordAttempt,saveProgress} from '../src/training/progress.
 import {describeShot} from '../src/training/coach.js';
 import {suggestStance,spinExplanation} from '../src/training/stance.js';
 import {OUTER_X,OUTER_Z} from '../src/table-model.js';
+import {validPosition,searchCustom} from '../src/training/custom-solver.js';
+
+test('custom placement rejects overlap, pockets and outside positions; solver returns verified shots',()=>{
+ const lesson={...LESSONS[0],balls:LESSONS[0].balls.map(b=>({...b}))};
+ assert.equal(validPosition(lesson.balls,0,lesson.balls[1].x,lesson.balls[1].z),false);
+ assert.equal(validPosition(lesson.balls,0,100,0),false);
+ assert.equal(validPosition(lesson.balls,0,0,0),true);
+ const search=searchCustom(lesson);let step;do{step=search.next();}while(!step.done);
+ assert.ok(step.value.tested<=1800);assert.ok(step.value.shots.length);
+ for(const shot of step.value.shots)assert.equal(simulateLesson(lesson,shot).result.passed,true);
+});
+
+test('custom solver does not invent a solution through surrounding blockers',()=>{
+ const balls=[{id:0,x:0,z:0},{id:1,x:2,z:1},...Array.from({length:6},(_,i)=>({id:i+2,x:.25*Math.cos(i*Math.PI/3),z:.25*Math.sin(i*Math.PI/3)}))];
+ const search=searchCustom({id:'blocked',balls,target:1,pocket:0});let step;
+ do{step=search.next();}while(!step.done);
+ assert.equal(step.value.shots.length,0);assert.equal(step.value.tested,1800);
+});
 
 test('stance stays behind the shot and outside the rail for every direction',()=>{
  for(let angle=0;angle<Math.PI*2;angle+=.1){

@@ -316,6 +316,8 @@ if(scene)training=mountTraining({physics,scene,home:goHome,practice:startPractic
 function startTraining(){if(!training)return;goHome();lobby.root.hidden=true;training.open();}
 lobby=mountHomepage({startMatch,startPractice,startTraining,goHome,settings:()=>openDialog('#settings-dialog'),help:()=>openDialog('#help-dialog')});
 $('#help-dialog .setting-note:last-child').textContent='Chơi với máy: chọn 9-ball hoặc 8-ball, thi băng để giành quyền chọn người phá. 8-ball cần gọi bi và lỗ trước cú đánh; 9-ball phải chạm bi nhỏ nhất trước. Sau lỗi, kéo bi trắng đến vị trí hợp lệ. Tập luyện: đánh tự do, không tính thắng thua.';
+$('#help-dialog ol li:nth-child(4)').textContent='Menu ba gạch → Góc nhìn → Theo cơ: giữ chuột phải để xoay, cuộn để nhìn gần/xa. Điện thoại dùng hai ngón kéo hoặc chụm. Thanh quan sát có nút nâng/hạ tầm mắt và Về đường ngắm. Một chạm trên bàn vẫn dùng để ngắm; xoay góc nhìn không đổi hướng cơ.';
 if(scene)scene.canInteract=canUserShoot;
+if(scene)scene.onAimAid=()=>training?.markAssisted();
 goHome();renderState();renderAudio();
 if (import.meta.env.DEV) window.__noir = { physics, scene, audio, cancelPull, get match(){return match;},startMatch,startPractice,goHome };

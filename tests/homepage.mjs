@@ -34,7 +34,7 @@ try{
  await page.setViewportSize({width:390,height:844});await page.screenshot({path:'artifacts/homepage-mobile.png'});
  await page.locator('#ai-start').click();await page.screenshot({path:'artifacts/setup-mobile.png'});
  assert.equal(await page.locator('#lobby').evaluate(el=>el.scrollWidth<=el.clientWidth+1),true);
- await page.locator('#setup-back').click();await page.locator('#practice-start').click();
+ await page.locator('#setup-back').click();await page.locator('#practice-start').click();await page.locator('#free-practice-start').click();
  assert.equal(await page.evaluate(()=>window.__noir.physics.balls.filter(b=>!b.pocketed).length),16);
  assert.equal(await page.evaluate(()=>window.__noir.match),null);
  assert.deepEqual(errors,[]);console.log('PASS: home/setup validation, rosters, 8/9 racks, actual simultaneous lag, match entry, mobile, practice and no JS errors.');

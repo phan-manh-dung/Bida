@@ -40,9 +40,6 @@ export function mountHomepage({startMatch,startPractice,startTraining,goHome,set
     </section>
     <footer class="lobby-footer"><div><button id="home-settings">⚙ Cài đặt</button><button id="home-help">? Trợ giúp</button></div><span>9 FEET <i>·</i> 65 MM <i>·</i> NOIR</span></footer>`;
   document.querySelector('#app').appendChild(root);
-  const trainingCard=document.createElement('button');trainingCard.id='training-start';trainingCard.className='mode-card';
-  trainingCard.innerHTML='<span class="mode-number">04 / HỌC CÙNG HLV</span><span class="mode-art practice-art" aria-hidden="true"><i class="lobby-ball white-ball"></i></span><span class="mode-title">Học từng thế bi ↗</span><span class="mode-description">Chọn bài, xem hướng dẫn và luyện lại.<br>Theo dõi tiến bộ qua từng đường cơ.</span><span class="mode-footer">THƯ VIỆN BÀI TẬP →</span>';
-  trainingCard.onclick=()=>startTraining();root.querySelector('.mode-grid').append(trainingCard);
   const q=s=>root.querySelector(s),form=q('#match-form');
   function opponents(){const level=LEVELS.find(l=>l.id===q('#ai-level').value);q('#ai-opponent').innerHTML=level.opponents.map(o=>`<option value="${o.id}">${o.name}</option>`).join('');q('#opponent-caption').textContent=`Người chơi 2 · ${level.label}`;}
   function rack(){const nine=q('#game-type').value==='9';q('#rack-type').innerHTML=nine?'<option value="nine-wpa">WPA hiện hành · bi 9 trên điểm cuối bàn</option><option value="nine-classic">Truyền thống · bi 1 trên điểm cuối bàn</option>':'<option value="eight">Tam giác · bi 8 ở giữa, hai góc khác nhóm</option>';preview();}
@@ -55,7 +52,8 @@ export function mountHomepage({startMatch,startPractice,startTraining,goHome,set
   }
   q('#ai-start').onclick=()=>{q('#home-screen').hidden=true;q('#setup-screen').hidden=false;root.scrollTop=0;q('#setup-title').tabIndex=-1;q('#setup-title').focus();};
   q('#setup-back').onclick=()=>show();q('.brand').onclick=e=>{e.preventDefault();goHome();show();};
-  q('#practice-start').onclick=()=>{root.hidden=true;startPractice();};q('#home-settings').onclick=settings;q('#home-help').onclick=help;
+  q('#practice-start .mode-footer').textContent='CHỌN CÁCH LUYỆN TẬP →';
+  q('#practice-start').onclick=()=>{root.hidden=true;startTraining();};q('#home-settings').onclick=settings;q('#home-help').onclick=help;
   q('#ai-level').onchange=opponents;q('#game-type').onchange=rack;q('#rack-type').onchange=preview;
   q('#race-target').oninput=()=>q('#race-note').textContent=`Ai thắng ${q('#race-target').value||'…'} ván trước sẽ thắng trận.`;
   const tableNote=()=>q('#table-note').textContent=`${TABLES[q('#table-type').value].description}. Tất cả là bàn 9 feet, bi 65 mm.`;

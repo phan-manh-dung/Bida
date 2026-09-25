@@ -5,6 +5,8 @@ import { BALL_COLORS, STEP } from './physics.js';
 import { HALF_X, HALF_Z, OUTER_X, OUTER_Z, RADIUS, CLOTH_Y as Y, FOOT_SPOT_X, POCKET_DETAILS } from './table-model.js';
 import { buildTournamentTable, texture, RAIL_SURFACE_Y } from './table-visual.js';
 import { cueElevation, cuePose, CUE_IDLE_GAP, CUE_DRAW } from './cue-pose.js';
+import {mountCueCamera} from './cue-camera.js';
+import {mountContactAid} from './contact-aid.js';
 
 const UP = new THREE.Vector3(0, 1, 0);
 const CUE_AXIS = new THREE.Vector3(1, 0, 0);
@@ -78,6 +80,8 @@ export class PoolScene {
     this.controls.rotateSpeed = 0.18;
     this.controls.mouseButtons.LEFT=null;this.controls.mouseButtons.RIGHT=THREE.MOUSE.ROTATE;
     this.controls.touches.ONE=null;
+    this.cueCamera=mountCueCamera(this);
+    this.contactAid=mountContactAid(this);
     this.buildRoom();
     const materials = buildTournamentTable(this.scene, this.renderer);
     this.feltMaterial = materials.felt; this.cushionMaterial = materials.cushion;
@@ -187,7 +191,7 @@ export class PoolScene {
     element.addEventListener('pointerdown', e => { if (e.isPrimary && e.button === 0) down = { x: e.clientX, y: e.clientY }; });
     element.addEventListener('pointercancel', () => { down = null; });
     element.addEventListener('pointerup', e => {
-      if (!down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 6 || !this.physics.canShoot || this.inputLocked || this.canInteract?.()===false) { down = null; return; }
+      if (!down || this.cameraGesture || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 6 || !this.physics.canShoot || this.inputLocked || this.canInteract?.()===false) { down = null; return; }
       down = null;
       const rect = element.getBoundingClientRect();
       const point = new THREE.Vector2((e.clientX - rect.left) / rect.width * 2 - 1, -(e.clientY - rect.top) / rect.height * 2 + 1);
@@ -204,8 +208,9 @@ export class PoolScene {
     this.cushionMaterial.color.set(cloth);
     this.cushionMaterial.emissive.set(cloth);
   }
-  setView(view) {
-    this.view = view;this.controls.enableRotate=view==='orbit';
+  setView(view,preserveCamera=false) {
+    this.view = view;this.cueCamera.configure(view==='cue');
+    if(view==='cue'&&preserveCamera)return;
     // Clear damping inertia so a preset always lands at the same fitted camera.
     this.controls.enableDamping = false; this.controls.update();
     const area = this.playArea();
@@ -215,9 +220,7 @@ export class PoolScene {
       if (portrait) this.camera.up.set(1, 0, 0);
       this.fitTable(new THREE.Vector3(0, 1, 0.00001));
     } else if (view === 'cue') {
-      const b = this.physics.cueBall;
-      this.camera.position.set(b.x - Math.cos(this.angle) * 5.4, 2.9, b.z - Math.sin(this.angle) * 5.4);
-      this.controls.target.set(b.x + Math.cos(this.angle) * 2.1, Y, b.z + Math.sin(this.angle) * 2.1);
+      this.cueCamera.reset();
     } else this.fitTable(portrait ? new THREE.Vector3(6, 18, 0.45) : new THREE.Vector3(3.3, 9.6, 11));
     this.controls.update(); this.controls.enableDamping = true;
   }
@@ -245,7 +248,7 @@ export class PoolScene {
     // Render the floor across the entire viewport while reserving space to the right for the cue.
     this.camera.setViewOffset(area.width, area.height, 0, -area.margin, width, height);
     this.renderer.setSize(width, height);
-    if (this.lastSize && (width !== this.lastSize[0] || height !== this.lastSize[1])) this.setView(this.view);
+    if (this.lastSize && (width !== this.lastSize[0] || height !== this.lastSize[1])) this.setView(this.view,true);
     this.lastSize = [width, height];
   }
   playArea() {
@@ -304,7 +307,7 @@ export class PoolScene {
     }
     // Only the static table casts shadows. No moving cue/ball shadow or trail,
     // and no shadow-map rebuild during the stroke or rolling animation.
-    this.guide.visible = this.physics.canShoot && this.aimVisible && !this.striking && this.showCue!==false;
+    this.guide.visible = this.physics.canShoot && this.aimVisible && !this.striking && this.showCue!==false && !(this.view==='cue'&&this.contactAidEnabled);
     this.ghost.visible = this.guide.visible && this.ghostEnabled!==false;
     if (this.guide.visible) {
       const key = `${this.angle}:${b.x}:${b.z}:${this.physics.shots}`;
@@ -316,7 +319,7 @@ export class PoolScene {
       this.ghost.position.set(target.x, Y + 0.002, target.z);
     }
 
-    this.controls.update(); this.syncBalls(0); this.renderer.render(this.scene, this.camera);
+    this.contactAidText=this.contactAid.update();this.cueCamera.update();this.controls.update(); this.syncBalls(0); this.renderer.render(this.scene, this.camera);
     this.frame = requestAnimationFrame(this.tick);
   }
   project(x, z, y = Y) {

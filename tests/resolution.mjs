@@ -4,7 +4,7 @@ const browser = await chromium.launch({ channel: 'chrome', headless: true });
 try {
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 2 });
   await page.goto(process.env.BASE_URL || 'http://127.0.0.1:5173/', { waitUntil: 'networkidle' });
-  await page.locator('#practice-start').click();
+  await page.locator('#practice-start').click();await page.locator('#free-practice-start').click();
   await page.waitForFunction(() => window.__noir?.scene);
   const result = await page.evaluate(() => {
     const s = window.__noir.scene;
