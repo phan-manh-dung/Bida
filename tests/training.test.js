@@ -6,6 +6,22 @@ import {loadLayout,simulateLesson,evaluateLesson} from '../src/training/engine.j
 import {PoolPhysics,RADIUS} from '../src/physics.js';
 import {readProgress,recordAttempt,saveProgress} from '../src/training/progress.js';
 import {describeShot} from '../src/training/coach.js';
+import {suggestStance,spinExplanation} from '../src/training/stance.js';
+import {OUTER_X,OUTER_Z} from '../src/table-model.js';
+
+test('stance stays behind the shot and outside the rail for every direction',()=>{
+ for(let angle=0;angle<Math.PI*2;angle+=.1){
+  const lesson={balls:[{id:0,x:1,z:.5}]};
+  const s=suggestStance(lesson,{angle},'left');
+  const foot=s.feet[0],dx=foot.x-1,dz=foot.z-.5;
+  assert.ok(Math.abs(foot.x)>OUTER_X||Math.abs(foot.z)>OUTER_Z);
+  assert.ok(dx*Math.cos(angle)+dz*Math.sin(angle)<0);
+  assert.ok(Math.abs(dx*Math.sin(angle)-dz*Math.cos(angle))<1e-8);
+  assert.ok(Number.isFinite(s.reachCm));
+ }
+ assert.match(spinExplanation({x:-.5,y:.5}),/Cu-lê.*trái/);
+ assert.match(spinExplanation({x:.5,y:-.5}),/Trô.*phải/);
+});
 
 test('every published lesson has valid geometry and physically successful sample shots',()=>{
   assert.equal(new Set(LESSONS.map(l=>l.id)).size,LESSONS.length);

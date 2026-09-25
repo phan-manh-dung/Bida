@@ -53,3 +53,15 @@
 .coach-alternative span{font-size:11px;color:#bfd1ce}
 #training-panel .coach-title{margin:10px 0 5px}
 .coach-compact .coach-tip{padding:9px}
+
+#training-result{position:absolute;inset:0 100px 0 382px;z-index:20;display:grid;place-items:center;pointer-events:none;padding:16px}
+.coach-stance{border:1px solid #756744;border-radius:10px;padding:10px;margin:10px 0;color:#f1dfad;font-size:13px;line-height:1.45}
+.coach-stance button{margin:4px 6px 4px 0}.coach-stance button[aria-pressed="true"]{background:#dac384!important;color:#17232a!important}
+.coach-stance small{display:block;margin-top:5px;color:#bed0cd}.coach-stance p{margin:5px 0}.coach-spin{font-size:13px;line-height:1.5;color:#dcebe6}
+.training-result-card{pointer-events:auto;width:min(360px,100%);padding:22px;background:#142932f5;border:1px solid #86d6bc;border-radius:16px;box-shadow:0 10px 35px #0005;color:#edf7f3}
+.training-result-card h2{margin:0 0 12px;font-size:20px}.training-result-card p{font-size:14px;line-height:1.5}
+.training-result-card .coach-footer{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.training-result-card button{padding:13px;border-radius:9px;background:#29424b;color:#fff;font-size:15px}
+.training-result-card [data-retry]{background:#89dfbf;color:#12342b;font-weight:700}
+@media(max-width:800px){#training-result{left:295px;right:85px}}
+@media(max-width:600px){#training-result{inset:65px 0 320px;padding:12px}}

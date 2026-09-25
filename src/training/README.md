@@ -1,5 +1,7 @@
 # Học cùng HLV
 
+Luồng thao tác: trước cú đánh có **Thực hiện**, **Tự đánh**, **Bài tiếp**. Thực hiện gọi `prepareShot(shot)` để đặt hướng và điểm đầu cơ theo phương án đã chọn, lực về 0; không tự đánh. Người chơi tự kéo lực và thả cơ. Khi bi dừng, chỉ hiện **Thử lại** (xếp lại thế bi) và **Thoát** (về thư viện bài tập). Đã bỏ phần mở rộng so sánh và phát thử trên sơ đồ khỏi giao diện; các cách đánh vẫn chọn bằng danh sách.
+
 Giao diện hiện tại gộp điểm ngắm, phần chồng hai bi, hình đặt đầu cơ/lực và mẹo ngắn vào cùng một thẻ. Không còn ba tab hướng dẫn. `options.js` sắp xếp bản sao danh sách theo độ phức tạp thao tác, giữ nguyên lời giải và ID bài; cách đơn giản nhất trong bài được gắn “Tập sự · thử trước”, không khẳng định đây là thống kê mức phổ biến ngoài đời. Phần so sánh/chạy sơ đồ nằm trong mục mở rộng. Dấu dừng bi cái trên bàn nhấp nháy chậm bằng callback render, tôn trọng reduced-motion và được hủy cùng overlay khi đánh, tự tập hoặc rời bài.
 
 Thư viện mở, không đặt tổng số bài cố định. Có 12 thế bi gốc và các phương án đầu cơ được chạy thử với vật lý NOIR. HLV mặc định hiển thị hướng dẫn có hình, chia ba bước: điểm ngắm, đầu cơ/lực, đường chạy/vị trí dừng. Có nút tự đánh để ẩn trợ giúp và ghi nhận hoàn thành độc lập. Đây không phải bản sao các bài thi có bản quyền hay một bộ giải tổng quát cho mọi thế bi.

@@ -310,7 +310,7 @@ if(scene)training=mountTraining({physics,scene,home:goHome,practice:startPractic
   changed:renderState,
   isBusy:()=>releasing||physics.moving,
   resetControls:()=>{cancelPull();spinControl.reset();},
-  setShot:shot=>{scene.angle=shot.angle;spinControl.setPoint(shot.tip);scene.guideKey=null;scene.bridgeKey=null;},
+  prepareShot:shot=>{cancelPull();scene.angle=shot.angle;spinControl.setPoint(shot.tip);scene.guideKey=null;scene.bridgeKey=null;if(scene.view==='cue')scene.setView('cue');},
   enter:()=>{match?.dispose();match=null;mode='training';releasing=false;lobby.root.hidden=true;$('#game').classList.add('training-layout');enterGame();scene.inputLocked=false;scene.showCue=true;scene.followBall=false;scene.pocketLabels.visible=false;matchHUD.render(null);},
 });
 function startTraining(){if(!training)return;goHome();lobby.root.hidden=true;training.open();}
