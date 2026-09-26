@@ -67,7 +67,7 @@ export function mountCueCamera(scene){
     contactNote.hidden=!scene.contactAidText;
     if(contactNote.textContent!==scene.contactAidText)contactNote.textContent=scene.contactAidText||'';
     ui.querySelectorAll('button').forEach(button=>button.disabled=!controls.enabled||!!scene.striking);
-    if(!manual&&!scene.physics.moving&&!scene.striking&&scene.angle!==lastAngle){
+    if(!manual&&!scene.touchAiming&&!scene.physics.moving&&!scene.striking&&scene.angle!==lastAngle){
       const b=scene.physics.cueBall,pivot=new THREE.Vector3(b.x,CLOTH_Y+RADIUS,b.z),delta=scene.angle-lastAngle;
       camera.position.sub(pivot).applyAxisAngle(new THREE.Vector3(0,1,0),-delta).add(pivot);
       controls.target.sub(pivot).applyAxisAngle(new THREE.Vector3(0,1,0),-delta).add(pivot);

@@ -50,6 +50,7 @@ try{
  assert.equal(await page.locator('#pull-cue').getAttribute('aria-disabled'),'false');
  await page.locator('[data-back]').click();assert.equal(await page.locator('#custom-training-start').isVisible(),true);
  await page.setViewportSize({width:390,height:844});await page.locator('#custom-training-start').click();
+ assert.equal(await page.locator('#training-panel').isVisible(),false);await page.locator('#phone-coach').click();
  assert.equal(await page.locator('[data-ready]').isVisible(),true);
  await page.screenshot({path:'artifacts/custom-training-mobile.png'});
  assert.deepEqual(errors,[]);console.log('PASS custom training: navigation, placement, overlap rejection, multiple balls, worker search, manual preparation, retry, cancellation and mobile');

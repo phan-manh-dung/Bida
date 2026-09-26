@@ -7,6 +7,8 @@ import { mountHomepage, mountMatchHUD } from './homepage.js';
 import { PoolMatch } from './match.js';
 import { mountSpinControl } from './cue-spin.js';
 import { mountTraining } from './training/index.js';
+import {mountMobilePlay} from './mobile-play.js';
+import {localPointer} from './screen-coordinates.js';
 
 const paths = {
   menu: '<path d="M4 6h16M4 12h16M4 18h16"/>',
@@ -135,6 +137,7 @@ function lockAim(locked) {
   scene.inputLocked = locked || !canUserShoot(); scene.controls.enabled = !locked;
 }
 function cancelPull() {
+  scene?.cancelTouchAim?.();
   scene?.cancelPlacement?.();
   drag = null; spaceStart = null; cancelAnimationFrame(spaceFrame);
   $('#cue-control').classList.remove('dragging'); setPower(0);
@@ -165,15 +168,17 @@ pull.addEventListener('pointerdown', event => {
   if (!event.isPrimary || event.button !== 0 || !scene || !canUserShoot() || scene.placingCue || !physics.canShoot || releasing || document.querySelector('dialog[open]')) return;
   event.preventDefault(); pull.focus({ preventScroll: true });
   audio.unlock().catch(() => {});
-  drag = { id: event.pointerId, y: event.clientY, x: event.clientX, travel: pullTravel(pull.clientHeight) };
+  scene.cancelTouchAim?.();const p=localPointer(pull,event);
+  drag = { id: event.pointerId, y:p.y, x:p.x, travel: pullTravel(pull.clientHeight) };
   pull.setPointerCapture(event.pointerId); setPower(0); lockAim(true);
   $('#cue-control').classList.add('dragging');
   spinControl.setEnabled(false);
 });
 pull.addEventListener('pointermove', event => {
   if (!drag || event.pointerId !== drag.id) return;
-  if (Math.abs(event.clientX - drag.x) > 130) { cancelPull(); return; }
-  setPower(pullPower(event.clientY - drag.y, drag.travel));
+  const p=localPointer(pull,event);
+  if (Math.abs(p.x - drag.x) > 130) { cancelPull(); return; }
+  setPower(pullPower(p.y - drag.y, drag.travel));
 });
 pull.addEventListener('pointerup', event => { if (drag?.id === event.pointerId) releaseShot(); });
 pull.addEventListener('pointercancel', cancelPull);
@@ -317,7 +322,9 @@ function startTraining(){if(!training)return;goHome();lobby.root.hidden=true;tra
 lobby=mountHomepage({startMatch,startPractice,startTraining,goHome,settings:()=>openDialog('#settings-dialog'),help:()=>openDialog('#help-dialog')});
 $('#help-dialog .setting-note:last-child').textContent='Chơi với máy: chọn 9-ball hoặc 8-ball, thi băng để giành quyền chọn người phá. 8-ball cần gọi bi và lỗ trước cú đánh; 9-ball phải chạm bi nhỏ nhất trước. Sau lỗi, kéo bi trắng đến vị trí hợp lệ. Tập luyện: đánh tự do, không tính thắng thua.';
 $('#help-dialog ol li:nth-child(4)').textContent='Menu ba gạch → Góc nhìn → Theo cơ: giữ chuột phải để xoay, cuộn để nhìn gần/xa. Điện thoại dùng hai ngón kéo hoặc chụm. Thanh quan sát có nút nâng/hạ tầm mắt và Về đường ngắm. Một chạm trên bàn vẫn dùng để ngắm; xoay góc nhìn không đổi hướng cơ.';
+$('#help-dialog ol li:first-child').textContent='Máy tính: nhấp mặt bàn để ngắm. Điện thoại: chạm và kéo trực tiếp thân cơ để xoay hướng; chạm bi mục tiêu không đổi hướng ngắm. Cầm điện thoại ngang để dùng trọn diện tích bàn.';
+$('#help-dialog ol li:nth-child(4)').textContent='Nút Góc nhìn trên điện thoại mở các chế độ quan sát. Theo cơ: hai ngón kéo/chụm để xoay và zoom; máy tính dùng chuột phải và con lăn. Hướng dẫn nằm trong nút HLV / Đặt bi. Nút Về đường ngắm đưa camera về sau bi cái.';
 if(scene)scene.canInteract=canUserShoot;
 if(scene)scene.onAimAid=()=>training?.markAssisted();
-goHome();renderState();renderAudio();
+goHome();renderState();renderAudio();mountMobilePlay(scene,cancelPull);
 if (import.meta.env.DEV) window.__noir = { physics, scene, audio, cancelPull, get match(){return match;},startMatch,startPractice,goHome };

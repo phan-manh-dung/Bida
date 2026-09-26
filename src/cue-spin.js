@@ -1,5 +1,6 @@
 // UI coordinates: x right, y up. The playable disc maps to a half-radius
 // contact offset, avoiding unreliable contacts at the miscue limit.
+import {localPointer} from './screen-coordinates.js';
 export const MAX_TIP_OFFSET = 0.5;
 export function normalizeTip(point = {}) {
   let x = Number.isFinite(point?.x) ? point.x : 0;
@@ -25,8 +26,7 @@ export function mountSpinControl(container, onChange) {
     onChange({...point});
   }
   function move(e) {
-    const r=ball.getBoundingClientRect();
-    set({x:(e.clientX-r.left-r.width/2)/(r.width*.39),y:(r.top+r.height/2-e.clientY)/(r.height*.39)});
+    const p=localPointer(ball,e);set({x:(p.u-.5)/.39,y:(.5-p.v)/.39});
   }
   ball.addEventListener('pointerdown',e=>{
     if(!enabled||!e.isPrimary||e.button!==0)return;

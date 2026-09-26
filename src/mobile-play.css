@@ -1,0 +1,24 @@
+#phone-coach,#phone-camera,#phone-views{display:none}
+#game.phone-play.phone-camera-open #phone-views{display:flex;position:absolute;left:48px;top:38px;z-index:17;gap:6px;flex-wrap:wrap;width:270px;padding:8px;border-radius:10px;background:#14232df5}
+#phone-views button{padding:8px 12px;background:#29414b;color:#fff;border:1px solid #ffffff30;border-radius:7px}#phone-views small{font-size:11px;color:#d9eae6}
+#game.phone-play{position:fixed;width:100dvw;height:100dvh;inset:0}
+#game.phone-portrait{width:100dvh;height:100dvw;left:100dvw;right:auto;bottom:auto;transform-origin:0 0;transform:rotate(90deg)}
+#game.phone-play #scene{inset:36px 65px 0 0!important}
+#game.phone-play .menu-toggle{top:3px!important;left:6px;width:32px;height:30px}
+#game.phone-play .settings-toggle{top:3px;right:6px;width:32px;height:30px}
+#game.phone-play #cue-control{right:8px;top:52px;bottom:54px;width:42px;height:auto;transform:none}
+#game.phone-play #pull-cue{height:100%;min-height:0}
+#game.phone-play .spin-control{width:40px;height:40px;right:0;top:calc(100% + 7px)}
+#game.phone-play #phone-camera,#game.phone-play.training-layout #phone-coach{display:block;position:absolute;top:3px;z-index:16;padding:6px 12px;border:1px solid #ffffff30;border-radius:8px;background:#243b45;color:#fff;font-size:12px;min-height:30px}
+#game.phone-play #phone-camera{left:48px}#game.phone-play #phone-coach{left:150px}
+#game.phone-play #training-panel{display:none;left:10px;right:auto;top:40px;bottom:8px;width:min(340px,calc(100% - 90px));max-height:none;padding:12px;z-index:15;background:#12212afa}
+#game.phone-play.phone-help-open #training-panel:not([hidden]){display:block}
+#game.phone-play .cue-camera-tools{display:none;bottom:5px;max-width:calc(100% - 12px)}
+#game.phone-play.phone-camera-open .cue-camera-tools:not([hidden]){display:block}
+#game.phone-play #training-result{inset:38px 60px 0 0}
+#game.phone-play .match-header{top:1px;left:280px;right:50px;transform:none;width:auto;height:34px;padding:0;grid-template-columns:1fr 55px 1fr}
+#game.phone-play .player-avatar{width:26px;height:26px}#game.phone-play .player-card{grid-template-columns:26px 1fr;gap:3px;padding:0}
+#game.phone-play #ai-score{grid-template-columns:1fr 26px}
+#game.phone-play .player-balls{display:none}#game.phone-play .player-info{font-size:10px}
+#game.phone-play .match-sidebar{top:38px;max-width:calc(100% - 80px)}
+#game.phone-play .foul-popup{top:45px;font-size:12px}

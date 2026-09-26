@@ -47,11 +47,10 @@ try{
  for(const size of [{width:390,height:844},{width:844,height:390}]){
   await page.setViewportSize(size);await page.waitForTimeout(250);
   const ball=await page.locator('.spin-ball').boundingBox();assert.ok(ball.x>=0&&ball.y>=0&&ball.x+ball.width<=size.width&&ball.y+ball.height<=size.height);
-  const panel=await page.locator('#training-panel').boundingBox();
-  assert.ok(ball.x+ball.width<=panel.x||ball.x>=panel.x+panel.width||ball.y+ball.height<=panel.y||ball.y>=panel.y+panel.height,'Spin selector must not be covered by the coach');
+  assert.equal(await page.locator('#training-panel').isVisible(),false,'Coach is collapsed on phones');
   await page.screenshot({path:`artifacts/training-${size.width}.png`});
  }
- await page.locator('[data-library]').click();await page.locator('[data-practice]').click();
+ await page.locator('#phone-coach').click();await page.locator('[data-library]').click();await page.locator('[data-practice]').click();
  assert.equal(await page.locator('#training-panel').isVisible(),false);
  assert.equal(await page.evaluate(()=>window.__noir.physics.balls.filter(b=>!b.pocketed).length),16);
  assert.deepEqual(errors,[]);console.log('PASS training: catalog, hints, real cue shot, scoring, retry, persistence, filters, responsive layouts, exit to practice');

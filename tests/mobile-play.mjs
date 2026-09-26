@@ -1,0 +1,40 @@
+import {chromium} from 'playwright';
+import assert from 'node:assert/strict';
+const browser=await chromium.launch({channel:'chrome',headless:true});
+try{
+ const page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true}),errors=[];
+ page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('http://127.0.0.1:5173/',{waitUntil:'networkidle'});
+ await page.locator('#practice-start').click();await page.locator('#training-start').click();await page.locator('[data-lesson="cut-gentle"]').click();await page.locator('#training-library [data-hand="right"]').click();
+ assert.equal(await page.locator('#training-panel').isVisible(),false);
+ assert.equal(await page.evaluate(()=>document.querySelector('#scene').clientWidth>document.querySelector('#scene').clientHeight),true);
+ await page.locator('#phone-coach').tap();await page.locator('[data-execute]').tap();
+ assert.equal(await page.locator('#training-panel').isVisible(),false);
+ await page.waitForTimeout(200);
+ const angle=await page.evaluate(()=>window.__noir.scene.angle);
+ const ball=await page.evaluate(()=>{const s=window.__noir.scene,b=window.__noir.physics.balls[1];return s.project(b.x,b.z);});
+ await page.touchscreen.tap(ball.x,ball.y);assert.equal(await page.evaluate(()=>window.__noir.scene.angle),angle,'Target taps do not aim on phones');
+ const cue=await page.evaluate(async()=>{const THREE=await import('/node_modules/three/build/three.module.js'),s=window.__noir.scene;s.cue.updateMatrixWorld(true);const p=s.cue.localToWorld(new THREE.Vector3(-.9,0,0));return s.project(p.x,p.z,p.y);});
+ const cdp=await page.context().newCDPSession(page);
+ await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:cue.x,y:cue.y,id:1}]});
+ await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:cue.x+25,y:cue.y+15,id:1}]});
+ await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+ await page.waitForTimeout(400);
+ assert.ok(Math.abs(await page.evaluate(()=>window.__noir.scene.angle)-angle)>.01,'Dragging cue rotates aim');
+ assert.equal(await page.evaluate(()=>window.__noir.physics.shots),0);
+ await page.locator('#phone-camera').tap();await page.locator('[data-phone-view="cue"]').tap();
+ assert.equal(await page.locator('[data-camera="high"]').isVisible(),true);
+ await page.locator('#phone-camera').tap();assert.equal(await page.locator('.cue-camera-tools').isVisible(),false);
+ await page.screenshot({path:'artifacts/mobile-landscape-game.png'});
+ // Rotated force control uses its local vertical axis (screen right-to-left).
+ const r=await page.locator('#pull-cue').boundingBox(),start={x:r.x+r.width-12,y:r.y+r.height/2,id:2};
+ await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[start]});
+ await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{...start,x:start.x-50}]});
+ assert.ok(Number(await page.locator('#pull-cue').getAttribute('aria-valuenow'))>0);
+ await cdp.send('Input.dispatchTouchEvent',{type:'touchCancel',touchPoints:[]});
+ assert.equal(await page.evaluate(()=>window.__noir.physics.shots),0,'Cancelled force drag never shoots');
+ await page.setViewportSize({width:844,height:390});await page.waitForTimeout(200);
+ assert.equal(await page.evaluate(()=>document.querySelector('#game').classList.contains('phone-portrait')),false);
+ assert.equal(await page.locator('#training-panel').isVisible(),false);
+ assert.deepEqual(errors,[]);console.log('PASS phone: landscape board, collapsed guidance, touch cue rotation, no tap aiming, rotated force, orientation change');
+}finally{await browser.close();}

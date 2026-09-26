@@ -3,6 +3,7 @@ import {CLOTH_Y,RADIUS} from '../table-model.js';
 import {loadLayout,simulateLesson} from './engine.js';
 import {validPosition} from './custom-solver.js';
 import {coachView} from './view.js';
+import {localPointer} from '../screen-coordinates.js';
 
 export function mountCustom({panel,resultBox,physics,scene,overlay,enter,back,resetControls,prepareShot,isBusy,changed,getHand,setHand}){
   let active=false,phase='edit',selected=0,target=1,balls=[],snapshot=[],shots=[],previews=[],variant=0,worker=null,message='';
@@ -25,7 +26,7 @@ export function mountCustom({panel,resultBox,physics,scene,overlay,enter,back,re
     if(!active||phase!=='edit'||e.button!==0||!e.isPrimary)return;
     e.preventDefault();e.stopImmediatePropagation();
     const rect=canvas.getBoundingClientRect(),ray=new THREE.Raycaster();
-    ray.setFromCamera(new THREE.Vector2((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1),scene.camera);
+    const p=localPointer(canvas,e);ray.setFromCamera(new THREE.Vector2(p.u*2-1,1-p.v*2),scene.camera);
     const hit=ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0,1,0),-CLOTH_Y-RADIUS),new THREE.Vector3());
     if(hit)place(hit.x,hit.z);
   },true);

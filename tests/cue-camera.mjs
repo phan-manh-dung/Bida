@@ -49,6 +49,7 @@ try{
  assert.equal(await page.locator('.cue-camera-tools').isVisible(),false);
  assert.equal(await page.evaluate(()=>window.__noir.scene.controls.enableZoom),false);
  await page.setViewportSize({width:390,height:844});
+ await page.locator('#phone-camera').click();
  await page.locator('#menu-toggle').click();await page.locator('[data-view="cue"]').click();
  await page.locator('[data-camera="near"]').click();await page.locator('[data-camera="right"]').click();
  await page.screenshot({path:'artifacts/cue-camera-mobile.png'});

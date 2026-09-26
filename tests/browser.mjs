@@ -134,15 +134,15 @@ try {
   await touchPage.evaluate(async()=>{await new Promise(requestAnimationFrame);await new Promise(requestAnimationFrame);});
   const touchTarget = await touchPage.evaluate(() => window.__noir.scene.project(1,0.5));
   await touchPage.touchscreen.tap(touchTarget.x,touchTarget.y);
-  await touchPage.waitForFunction(() => Math.abs(window.__noir.scene.angle - Math.atan2(0.4,3.45)) < 0.03);
+  assert.equal(await touchPage.evaluate(()=>window.__noir.scene.angle),-.281,'Touch taps no longer change aim');
   const cdp = await mobile.newCDPSession(touchPage), r = await touchPage.locator('#pull-cue').boundingBox();
   const tx = r.x + r.width * 0.45, ty = r.y + r.height * 0.25;
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: tx, y: ty }] });
-  await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: tx, y: ty + r.height * 0.15 }] });
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: tx-r.width*.15, y: ty }] });
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchCancel', touchPoints: [] });
   assert.equal(await touchPage.evaluate(() => window.__noir.physics.shots),0);
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: tx, y: ty }] });
-  await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: tx, y: ty + r.height * 0.15 }] });
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: tx-r.width*.15, y: ty }] });
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   await touchPage.waitForFunction(() => window.__noir.physics.shots === 1);
   assert.deepEqual(errors, []);

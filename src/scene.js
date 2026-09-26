@@ -7,6 +7,8 @@ import { buildTournamentTable, texture, RAIL_SURFACE_Y } from './table-visual.js
 import { cueElevation, cuePose, CUE_IDLE_GAP, CUE_DRAW } from './cue-pose.js';
 import {mountCueCamera} from './cue-camera.js';
 import {mountContactAid} from './contact-aid.js';
+import {localPointer,screenProjection} from './screen-coordinates.js';
+import {mountTouchAim} from './touch-aim.js';
 
 const UP = new THREE.Vector3(0, 1, 0);
 const CUE_AXIS = new THREE.Vector3(1, 0, 0);
@@ -142,11 +144,12 @@ export class PoolScene {
     this.ghost.rotation.x = -Math.PI / 2; this.scene.add(this.ghost);
   }
   bindInput() {
+    mountTouchAim(this);
     const element = this.renderer.domElement; let down = null;
     const tableHit = event => {
       const rect = element.getBoundingClientRect();
       const ray = new THREE.Raycaster();
-      ray.setFromCamera(new THREE.Vector2((event.clientX - rect.left) / rect.width * 2 - 1, -(event.clientY - rect.top) / rect.height * 2 + 1), this.camera);
+      const p=localPointer(element,event);ray.setFromCamera(new THREE.Vector2(p.u*2-1,1-p.v*2), this.camera);
       return ray.ray.intersectPlane(new THREE.Plane(UP, -Y - RADIUS), new THREE.Vector3());
     };
     this.cancelPlacement = (restore = true) => {
@@ -191,10 +194,10 @@ export class PoolScene {
     element.addEventListener('pointerdown', e => { if (e.isPrimary && e.button === 0) down = { x: e.clientX, y: e.clientY }; });
     element.addEventListener('pointercancel', () => { down = null; });
     element.addEventListener('pointerup', e => {
-      if (!down || this.cameraGesture || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 6 || !this.physics.canShoot || this.inputLocked || this.canInteract?.()===false) { down = null; return; }
+      if (e.pointerType==='touch'||!down || this.cameraGesture || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 6 || !this.physics.canShoot || this.inputLocked || this.canInteract?.()===false) { down = null; return; }
       down = null;
       const rect = element.getBoundingClientRect();
-      const point = new THREE.Vector2((e.clientX - rect.left) / rect.width * 2 - 1, -(e.clientY - rect.top) / rect.height * 2 + 1);
+      const p=localPointer(element,e),point = new THREE.Vector2(p.u*2-1,1-p.v*2);
       const ray = new THREE.Raycaster(); ray.setFromCamera(point, this.camera);
       const hit = ray.ray.intersectPlane(new THREE.Plane(UP, -Y), new THREE.Vector3());
       if (!hit || Math.abs(hit.x) > HALF_X + 0.2 || Math.abs(hit.z) > HALF_Z + 0.2) return;
@@ -253,6 +256,7 @@ export class PoolScene {
   }
   playArea() {
     const width = this.container.clientWidth, height = this.container.clientHeight;
+    if(document.querySelector('#game')?.classList.contains('phone-play'))return {width,height,margin:0};
     const gutter = width <= 700 || height <= 500 ? 74 : 100;
     const margin = width <= 700 && height > 500 ? 40 : 0;
     return { width: Math.max(150, width - gutter), height: height - 2 * margin, margin };
@@ -324,6 +328,6 @@ export class PoolScene {
   }
   project(x, z, y = Y) {
     const point = new THREE.Vector3(x, y, z).project(this.camera), rect = this.renderer.domElement.getBoundingClientRect();
-    return { x: rect.left + (point.x + 1) * rect.width / 2, y: rect.top + (1 - point.y) * rect.height / 2 };
+    return screenProjection(this.renderer.domElement,(point.x+1)/2,(1-point.y)/2);
   }
 }
