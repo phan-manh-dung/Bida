@@ -298,6 +298,8 @@ export class PoolScene {
     this.physics.update(motionDt);
     showCue = showCue && !this.physics.moving;
     this.cue.visible = showCue;
+    const fadeCue=this.view==='cue'&&this.camera.position.y<.5;
+    if(fadeCue!==this.cueFaded){this.cueFaded=fadeCue;for(const part of this.cue.children){part.material.transparent=fadeCue;part.material.opacity=fadeCue?.10:1;part.material.depthWrite=!fadeCue;part.material.needsUpdate=true;}}
     const origin = this.striking || b;
     const bridgeKey = `${origin.x}:${origin.z}:${this.angle}`;
     if (showCue && bridgeKey !== this.bridgeKey) {
@@ -323,7 +325,7 @@ export class PoolScene {
       this.ghost.position.set(target.x, Y + 0.002, target.z);
     }
 
-    this.contactAidText=this.contactAid.update();this.cueCamera.update();this.controls.update(); this.syncBalls(0); this.renderer.render(this.scene, this.camera);
+    this.contactAidText=this.contactAid.update();this.cueCamera.update();this.controls.update();this.cueCamera.constrain(); this.syncBalls(0); this.renderer.render(this.scene, this.camera);
     this.frame = requestAnimationFrame(this.tick);
   }
   project(x, z, y = Y) {

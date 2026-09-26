@@ -9,6 +9,7 @@ export function mountCueCamera(scene){
   container.append(ui);
   const high=document.createElement('button');high.dataset.camera='high';high.textContent='Nhìn từ cao';
   ui.querySelector('[data-camera="reset"]').before(high);
+  const low=document.createElement('button');low.dataset.camera='low';low.textContent='Ngang tầm bi';high.before(low);
   const aid=document.createElement('button');aid.dataset.camera='contact';aid.textContent='Điểm chạm';aid.setAttribute('aria-pressed','false');high.after(aid);
   const contactNote=document.createElement('p');contactNote.className='contact-aid-note';contactNote.hidden=true;ui.append(contactNote);
   ui.querySelector('small').textContent='Chuột phải kéo dọc: nâng/hạ · Kéo ngang: xoay · Cuộn: gần/xa · Hai ngón trên điện thoại';
@@ -24,6 +25,7 @@ export function mountCueCamera(scene){
     if(scene.view!=='cue'||!controls.enabled||scene.striking)return;
     if(action==='contact'){scene.contactAidEnabled=!scene.contactAidEnabled;aid.setAttribute('aria-pressed',String(scene.contactAidEnabled));if(scene.contactAidEnabled)scene.onAimAid?.();return;}
     if(action==='reset'){reset();return;}
+    if(action==='low'){reset(.28);return;}
     // Flush damping before applying an exact button step.
     controls.enableDamping=false;controls.update();
     const offset=camera.position.clone().sub(controls.target),s=new THREE.Spherical().setFromVector3(offset);
@@ -46,18 +48,18 @@ export function mountCueCamera(scene){
     camera.position.copy(controls.target).add(new THREE.Vector3().setFromSpherical(s));controls.update();controls.enableDamping=true;
   }
   ui.querySelectorAll('button').forEach(button=>button.onclick=()=>change(button.dataset.camera));
-  function reset(){
+  function reset(height=.65){
     const b=scene.physics.cueBall,dx=Math.cos(scene.angle),dz=Math.sin(scene.angle);
     controls.enableDamping=false;controls.update();
     controls.target.set(b.x+dx*.65,CLOTH_Y+RADIUS,b.z+dz*.65);
-    camera.position.set(b.x-dx*3.3,1.65,b.z-dz*3.3);
+    camera.position.set(b.x-dx*3.3,height,b.z-dz*3.3);
     controls.update();controls.enableDamping=true;manual=false;lastAngle=scene.angle;
   }
   function configure(cue){
     ui.hidden=!cue;
     controls.enableZoom=cue;controls.enableRotate=cue||scene.view==='orbit';
     controls.minDistance=cue?1.6:3;controls.maxDistance=cue?16:28;
-    controls.minPolarAngle=.02;controls.maxPolarAngle=cue?1.40:Math.PI*.44;
+    controls.minPolarAngle=.02;controls.maxPolarAngle=cue?Math.PI/2-.005:Math.PI*.44;
     controls.rotateSpeed=cue?.45:.18;
     controls.touches.TWO=cue?THREE.TOUCH.DOLLY_ROTATE:null;
     camera.fov=cue?45:36;camera.updateProjectionMatrix();
@@ -74,5 +76,6 @@ export function mountCueCamera(scene){
     }
     lastAngle=scene.angle;
   }
-  return {configure,reset,update};
+  function constrain(){if(scene.view==='cue'&&camera.position.y<.27){camera.position.y=.27;camera.lookAt(controls.target);}}
+  return {configure,reset,update,constrain};
 }

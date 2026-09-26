@@ -289,6 +289,7 @@ function renderMatch(m){
 }
 function enterGame(){closeDialogs();$('#game').classList.toggle('match-layout',mode==='match');$('#game').hidden=false;if(scene){scene.suspended=false;scene.resize();scene.setView('top');document.querySelectorAll('[data-view]').forEach(b=>{b.classList.toggle('active',b.dataset.view==='top');b.setAttribute('aria-pressed',String(b.dataset.view==='top'));});}}
 function goHome(){
+  scene?.closePhonePanels?.();
   training?.close();$('#game').classList.remove('training-layout');
   match?.dispose();match=null;releasing=false;mode='home';cancelPull();closeDialogs();
   physics.reset();if(scene){scene.striking=null;scene.suspended=true;scene.followBall=false;scene.pocketLabels.visible=false;}

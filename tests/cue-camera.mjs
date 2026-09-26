@@ -10,6 +10,11 @@ try{
  await page.locator('#menu-toggle').click();await page.locator('[data-view="cue"]').click();
  const state=()=>page.evaluate(()=>{const s=window.__noir.scene;return {angle:s.angle,tip:s.tip,pos:s.camera.position.toArray(),target:s.controls.target.toArray(),distance:s.camera.position.distanceTo(s.controls.target)};});
  const base=await state();
+ await page.locator('[data-camera="low"]').click();
+ assert.ok((await state()).pos[1]<.3,'Low view reaches ball height');
+ assert.equal((await state()).angle,base.angle);
+ await page.screenshot({path:'artifacts/cue-camera-eye-level.png'});
+ await page.locator('[data-camera="reset"]').click();
  await page.locator('[data-camera="contact"]').click();
  await page.waitForFunction(()=>window.__noir.scene.scene.getObjectByName('live-contact-aid').visible);
  const contact=()=>page.evaluate(()=>window.__noir.scene.scene.getObjectByName('live-contact-point').position.toArray());
@@ -49,13 +54,14 @@ try{
  assert.equal(await page.locator('.cue-camera-tools').isVisible(),false);
  assert.equal(await page.evaluate(()=>window.__noir.scene.controls.enableZoom),false);
  await page.setViewportSize({width:390,height:844});
- await page.locator('#phone-camera').click();
  await page.locator('#menu-toggle').click();await page.locator('[data-view="cue"]').click();
+ await page.locator('#phone-camera').click();
  await page.locator('[data-camera="near"]').click();await page.locator('[data-camera="right"]').click();
  await page.screenshot({path:'artifacts/cue-camera-mobile.png'});
  assert.equal(await page.locator('[data-camera="reset"]').isVisible(),true);
  await page.locator('[data-camera="reset"]').click();
  const cdp=await page.context().newCDPSession(page);await cdp.send('Emulation.setTouchEmulationEnabled',{enabled:true,maxTouchPoints:2});
+ await page.locator('#phone-camera').click();
  const beforeTouch=await state(),rect=await page.locator('#scene canvas').boundingBox();
  const cx=rect.x+rect.width*.5,cy=rect.y+rect.height*.35;
  await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:cx-30,y:cy,id:1},{x:cx+30,y:cy,id:2}]});
@@ -63,6 +69,7 @@ try{
  await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await page.waitForTimeout(300);
  assert.equal((await state()).angle,beforeTouch.angle,'Two-finger gestures must never aim');
  assert.ok((await state()).distance<beforeTouch.distance,'Pinch zoom works on touch devices');
+ await page.locator('#phone-camera').click();
  await page.locator('[data-camera="reset"]').click();
  for(let i=0;i<20;i++)await page.locator('[data-camera="near"]').click();
  assert.ok((await state()).distance>=1.59,'Close-up has a safe minimum distance');

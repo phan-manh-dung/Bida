@@ -24,6 +24,14 @@ try{
  assert.equal(await page.evaluate(()=>window.__noir.physics.shots),0);
  await page.locator('#phone-camera').tap();await page.locator('[data-phone-view="cue"]').tap();
  assert.equal(await page.locator('[data-camera="high"]').isVisible(),true);
+ await page.locator('#phone-coach').tap();
+ assert.equal(await page.locator('#phone-views').isVisible(),false,'Coach and camera never overlap');
+ await page.locator('#phone-camera').tap();
+ assert.equal(await page.locator('#training-panel').isVisible(),false);
+ await page.locator('[data-camera="low"]').tap();
+ assert.ok(await page.evaluate(()=>window.__noir.scene.camera.position.y<.3));
+ const intersects=(a,b)=>a.x<b.x+b.width&&a.x+a.width>b.x&&a.y<b.y+b.height&&a.y+a.height>b.y;
+ for(const ids of [['#phone-coach','#phone-camera'],['#phone-views','#pull-cue']])assert.equal(intersects(await page.locator(ids[0]).boundingBox(),await page.locator(ids[1]).boundingBox()),false,'Controls do not overlap');
  await page.locator('#phone-camera').tap();assert.equal(await page.locator('.cue-camera-tools').isVisible(),false);
  await page.screenshot({path:'artifacts/mobile-landscape-game.png'});
  // Rotated force control uses its local vertical axis (screen right-to-left).
