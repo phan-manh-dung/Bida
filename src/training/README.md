@@ -1,5 +1,7 @@
 # Học cùng HLV
 
+**Thế bi của tôi:** `saved-layouts.js` lưu tối đa 200 thế bi dưới khóa `noir:saved-layouts:v1` của localStorage. Mỗi bản gồm ID, tên, ghi chú, mục tiêu, tọa độ/số bi và ngày cập nhật. Chỉ lưu thế trước cú đánh (snapshot); cập nhật giữ ID, lưu bản mới tạo ID mới. Danh sách có xem nhanh, mở để sửa/tập, xóa/hoàn tác và xuất/nhập JSON phiên bản 1. Nhập kiểm tra toàn bộ trước khi ghi, tạo các bản mới, không ghi đè danh sách cũ; tối đa 1 MB/file. Đây là lưu riêng theo trình duyệt/origin, chưa đồng bộ tài khoản; xuất file để chuyển thiết bị. Kiểm thử: `npm run test:saved-layouts`.
+
 Lối vào: **Tập luyện → Học từng thế bi / Tự đặt thế bi & HLV / Bàn tập tự do**.
 
 `custom.js` quản lý bàn tự đặt: chọn bi rồi chạm mặt bàn, thêm/xóa tối đa 15 bi màu, chọn bi mục tiêu, tự đánh, thử lại hoặc đánh tiếp từ vị trí mới. Bi cái không được xóa. `custom-solver.js` kiểm tra tọa độ và tìm các cú mẫu; `custom-worker.js` chạy tìm kiếm ngoài luồng giao diện, hủy khi sửa thế bi hoặc thoát. Giới hạn 1.800 lần mô phỏng, tối đa 8 gợi ý: đánh trực tiếp và một nhóm đường một băng qua băng dài. Mọi bi cản đều tham gia vật lý. Chỉ công bố cú đã chạm bi mục tiêu trước, vào đúng lỗ, không scratch/off-table và đã dừng. Chưa tìm ra không có nghĩa thế bi vô nghiệm; chưa giải tổ hợp, đá nhiều băng hoặc lập kế hoạch cả lượt.

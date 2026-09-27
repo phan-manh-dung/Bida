@@ -8,6 +8,7 @@ import {loadLayout,simulateLesson,evaluateLesson,resolveLesson} from './engine.j
 import {readProgress,recordAttempt,saveProgress} from './progress.js';
 import {createTrainingOverlay} from './overlay.js';
 import {mountCustom} from './custom.js';
+import {createLayoutStore,renderSavedLayouts} from './saved-layouts.js';
 
 // The host owns navigation, the live physics instance and cue controls.
 // This module owns lessons, progress, feedback and its removable visual overlay.
@@ -25,11 +26,14 @@ export function mountTraining({physics,scene,enter,home,practice,resetControls,p
   document.querySelector('#app').append(library);document.querySelector('#game').append(panel,resultBox);
   let filter='all';
   const cache=new Map();
-  const custom=mountCustom({panel,resultBox,physics,scene,overlay,enter,back:open,resetControls,prepareShot,isBusy,changed,getHand:()=>hand,setHand:chooseHand});
+  const layoutStore=createLayoutStore(storage);
+  const custom=mountCustom({panel,resultBox,physics,scene,overlay,enter,back:open,resetControls,prepareShot,isBusy,changed,getHand:()=>hand,setHand:chooseHand,layoutStore,openSaved});
+  function openSaved(){open();renderSavedLayouts(library,layoutStore,{back:open,create:()=>{library.hidden=true;custom.open();},open:record=>{library.hidden=true;custom.open(record);}});}
   function renderHub(){
     library.innerHTML='<button data-home>← Trang chủ</button><p class="eyebrow">TẬP LUYỆN</p><h1>Chọn cách luyện tập</h1><div class="lesson-grid"><button class="lesson-card" id="training-start"><strong>Học từng thế bi</strong><span>Bài mẫu, hướng dẫn và theo dõi tiến bộ.</span></button><button class="lesson-card" id="custom-training-start"><strong>Tự đặt thế bi & HLV</strong><span>Đặt bi tùy ý, tự đánh hoặc nhờ HLV phân tích.</span></button><button class="lesson-card" id="free-practice-start"><strong>Bàn tập tự do</strong><span>Xếp đủ 15 bi và tập đánh.</span></button></div>';
     library.querySelector('[data-home]').onclick=home;
     library.querySelector('#training-start').onclick=renderLibrary;
+    const saved=document.createElement('button');saved.className='lesson-card';saved.id='saved-training-start';saved.innerHTML='<strong>Thế bi của tôi</strong><span>Mở thế bi đã lưu, sao lưu hoặc nhập từ thiết bị khác.</span>';saved.onclick=openSaved;library.querySelector('.lesson-grid').append(saved);
     library.querySelector('#custom-training-start').onclick=()=>{lesson=null;library.hidden=true;custom.open();};
     library.querySelector('#free-practice-start').onclick=()=>{close();practice();};
   }

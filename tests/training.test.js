@@ -9,6 +9,21 @@ import {describeShot} from '../src/training/coach.js';
 import {suggestStance,spinExplanation} from '../src/training/stance.js';
 import {OUTER_X,OUTER_Z} from '../src/table-model.js';
 import {validPosition,searchCustom} from '../src/training/custom-solver.js';
+import {createLayoutStore} from '../src/training/saved-layouts.js';
+
+test('saved layouts persist exact positions, update, undo deletion and import atomically',()=>{
+ const values=new Map(),storage={getItem:k=>values.get(k)??null,setItem:(k,v)=>values.set(k,v)};
+ const store=createLayoutStore(storage),value={name:'Thế bi ở quán',notes:'Cắt mỏng',balls:LESSONS[2].balls,target:1};
+ const saved=store.save(value);assert.deepEqual(createLayoutStore(storage).list()[0].balls,value.balls);
+ store.save({...value,name:'Đổi tên'},saved.id);assert.equal(store.list().length,1);
+ const removed=store.remove(saved.id);assert.equal(store.list().length,0);store.restore(removed);assert.equal(store.list()[0].name,'Đổi tên');
+ const exported=store.exportFile();assert.equal(store.importFile(exported),1);assert.equal(store.list().length,2);
+ const before=store.exportFile(),bad=JSON.parse(exported);bad.items.push({...value,target:15});
+ assert.throws(()=>store.importFile(JSON.stringify(bad)));assert.equal(store.exportFile(),before);
+ assert.throws(()=>store.save({...value,balls:[value.balls[0],{...value.balls[0]}]}));
+ const blocked=createLayoutStore({getItem:()=>null,setItem:()=>{throw new Error('quota');}});assert.throws(()=>blocked.save(value),/Không lưu/);
+ const corrupt=createLayoutStore({getItem:()=>'{broken',setItem:()=>assert.fail('must not overwrite')});assert.throws(()=>corrupt.save(value),/giữ nguyên/);
+});
 
 test('custom placement rejects overlap, pockets and outside positions; solver returns verified shots',()=>{
  const lesson={...LESSONS[0],balls:LESSONS[0].balls.map(b=>({...b}))};

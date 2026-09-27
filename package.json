@@ -12,6 +12,7 @@
     "test:custom-training": "node tests/custom-training.mjs",
     "test:cue-camera": "node tests/cue-camera.mjs",
     "test:mobile": "node tests/mobile-play.mjs",
+    "test:saved-layouts": "node tests/saved-layouts.mjs",
     "training:calibrate": "node scripts/calibrate-training.mjs",
     "training:expand": "node scripts/expand-training.mjs",
     "test:homepage": "node tests/homepage.mjs",

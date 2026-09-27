@@ -56,6 +56,10 @@
 
 #training-result{position:absolute;inset:0 100px 0 382px;z-index:20;display:grid;place-items:center;pointer-events:none;padding:16px}
 .coach-stance{border:1px solid #756744;border-radius:10px;padding:10px;margin:10px 0;color:#f1dfad;font-size:13px;line-height:1.45}
+.save-layout{margin:12px 0;padding:8px;border:1px solid #48636b;border-radius:10px}.save-layout label{display:block;margin:8px 0}
+.save-layout input,.save-layout textarea{display:block;box-sizing:border-box;width:100%;padding:9px;border:1px solid #56747b;border-radius:6px;background:#152730;color:#fff;font:inherit}.save-layout textarea{min-height:65px;resize:vertical}
+.saved-layout-card{padding:18px;border:1px solid #49626b;border-radius:12px;background:#1b2b34;overflow-wrap:anywhere}.saved-layout-card h2{font-size:18px}.saved-layout-card button{margin:5px 6px 0 0}
+[data-saved-list]{grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr))}.saved-layout-card svg{display:block;max-height:180px}
 .coach-stance button{margin:4px 6px 4px 0}.coach-stance button[aria-pressed="true"]{background:#dac384!important;color:#17232a!important}
 .coach-stance small{display:block;margin-top:5px;color:#bed0cd}.coach-stance p{margin:5px 0}.coach-spin{font-size:13px;line-height:1.5;color:#dcebe6}
 .training-result-card{pointer-events:auto;width:min(360px,100%);padding:22px;background:#142932f5;border:1px solid #86d6bc;border-radius:16px;box-shadow:0 10px 35px #0005;color:#edf7f3}

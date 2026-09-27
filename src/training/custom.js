@@ -4,16 +4,18 @@ import {loadLayout,simulateLesson} from './engine.js';
 import {validPosition} from './custom-solver.js';
 import {coachView} from './view.js';
 import {localPointer} from '../screen-coordinates.js';
+import {downloadLayouts,validateLayout} from './saved-layouts.js';
 
-export function mountCustom({panel,resultBox,physics,scene,overlay,enter,back,resetControls,prepareShot,isBusy,changed,getHand,setHand}){
+export function mountCustom({panel,resultBox,physics,scene,overlay,enter,back,resetControls,prepareShot,isBusy,changed,getHand,setHand,layoutStore,openSaved}){
   let active=false,phase='edit',selected=0,target=1,balls=[],snapshot=[],shots=[],previews=[],variant=0,worker=null,message='';
   const canvas=scene.renderer.domElement;
+  let savedId=null,savedName='',savedNotes='';
   const copy=list=>list.map(({id,x,z})=>({id,x,z}));
   const layout=()=>({id:'custom',title:'Thế bi của bạn',balls:copy(balls),target,pocket:0,goal:`Đưa bi ${target} vào lỗ, giữ bi cái trên bàn.`});
   function cancel(){worker?.terminate();worker=null;}
   function sync(){loadLayout(physics,layout());scene.syncBalls(0);scene.guideKey=null;scene.bridgeKey=null;scene.pocketLabels.visible=true;scene.showCue=phase==='ready';scene.inputLocked=phase!=='ready';scene.aimVisible=scene.ghostEnabled=phase==='ready'&&!shots.length;changed();}
   function show(){overlay.clear();scene.aimVisible=scene.ghostEnabled=phase==='ready'&&!shots.length;if(shots.length&&phase==='ready')overlay.show({...layout(),pocket:shots[variant].pocket},previews[variant],shots[variant],getHand());}
-  function open(){cancel();active=true;phase='edit';balls=[{id:0,x:0,z:.4},{id:1,x:2.7,z:1.1}];snapshot=copy(balls);selected=0;target=1;shots=[];previews=[];message='';enter();panel.hidden=false;resetControls();sync();render();}
+  function open(record=null){cancel();active=true;phase='edit';balls=record?copy(record.balls):[{id:0,x:0,z:.4},{id:1,x:2.7,z:1.1}];snapshot=copy(balls);selected=0;target=record?.target??1;savedId=record?.id??null;savedName=record?.name??'';savedNotes=record?.notes??'';shots=[];previews=[];message=record?'Đã mở thế bi đã lưu. Có thể tập ngay hoặc chỉnh sửa rồi lưu lại.':'';enter();panel.hidden=false;resetControls();sync();render();}
   function close(){cancel();active=false;overlay.clear();resultBox.hidden=true;resultBox.replaceChildren();}
   function edit(){if(isBusy())return;cancel();phase='edit';balls=copy(snapshot);shots=[];previews=[];message='';resetControls();show();sync();render();}
   function ready(){snapshot=copy(balls);phase='ready';message='Chạm bàn để ngắm, tự chỉnh đầu cơ và kéo lực để đánh.';sync();render();}
@@ -59,7 +61,15 @@ export function mountCustom({panel,resultBox,physics,scene,overlay,enter,back,re
       <label>Bi mục tiêu <select id="custom-target">${balls.filter(b=>b.id).map(b=>`<option value="${b.id}" ${target===b.id?'selected':''}>Bi ${b.id}</option>`).join('')}</select></label><p class="training-note">HLV tìm cách vào bi được chọn; các bi còn lại vẫn cản đường và va chạm bình thường.</p>
       <button data-ready ${!getHand()?'disabled':''}>Bắt đầu đánh →</button>${!getHand()?'<p>Chọn tay cầm cơ ở trên để bắt đầu.</p>':''}`:
       `<div class="training-actions"><button data-edit ${locked?'disabled':''}>Sửa thế bi</button><button data-analyse ${locked||analysing||phase==='review'?'disabled':''}>Nhờ HLV phân tích</button>${analysing?'<button data-cancel>Dừng phân tích</button>':''}</div>`}
+      <details class="save-layout"><summary>Lưu thế bi${savedId?' · đã có trong danh sách':''}</summary><p>Lưu vị trí trước cú đánh hiện tại, bi mục tiêu và ghi chú.</p><label>Tên thế bi <input id="saved-layout-name" maxlength="80" placeholder="Ví dụ: Cắt mỏng sát băng"></label><label>Ghi chú <textarea id="saved-layout-notes" maxlength="500" placeholder="Điều muốn tập, lực đánh, lỗi hay gặp…"></textarea></label><div class="training-actions"><button data-save-layout ${locked||analysing?'disabled':''}>${savedId?'Cập nhật thế bi':'Lưu vào danh sách'}</button>${savedId?`<button data-copy-layout ${locked||analysing?'disabled':''}>Lưu bản mới</button>`:''}<button data-export-current ${locked||analysing?'disabled':''}>Xuất thế bi này</button></div></details><button data-my-layouts ${locked||analysing?'disabled':''}>Thế bi của tôi</button>
       <p data-custom-status role="status">${message}</p><div data-custom-coach></div>`;
+    const nameInput=panel.querySelector('#saved-layout-name'),notesInput=panel.querySelector('#saved-layout-notes');
+    nameInput.value=savedName;notesInput.value=savedNotes;nameInput.oninput=()=>savedName=nameInput.value;notesInput.oninput=()=>savedNotes=notesInput.value;
+    const saveValue=()=>validateLayout({name:savedName,notes:savedNotes,balls:copy(snapshot),target});
+    function save(asNew=false){if(isBusy()||phase==='analysing')return;try{const item=layoutStore.save(saveValue(),asNew?null:savedId);savedId=item.id;savedName=item.name;message='Đã lưu. Bạn có thể mở lại trong Tập luyện → Thế bi của tôi.';render();}catch(e){panel.querySelector('[data-custom-status]').textContent=e.message;}}
+    panel.querySelector('[data-save-layout]').onclick=()=>save();panel.querySelector('[data-copy-layout]')?.addEventListener('click',()=>save(true));
+    panel.querySelector('[data-export-current]').onclick=()=>{try{downloadLayouts(JSON.stringify({format:'noir-layouts',version:1,items:[saveValue()]},null,2));}catch(e){panel.querySelector('[data-custom-status]').textContent=e.message;}};
+    panel.querySelector('[data-my-layouts]').onclick=()=>{if(!isBusy()&&phase!=='analysing'){close();openSaved();}};
     panel.querySelector('[data-back]').onclick=()=>{if(!isBusy()){close();back();}};
     panel.querySelectorAll('[data-hand]').forEach(b=>b.onclick=()=>{setHand(b.dataset.hand);show();render();});
     panel.querySelector('#custom-ball')?.addEventListener('change',e=>{selected=Number(e.target.value);render();});

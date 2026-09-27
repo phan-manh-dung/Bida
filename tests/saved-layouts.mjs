@@ -1,0 +1,31 @@
+import {chromium} from 'playwright';
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+const browser=await chromium.launch({channel:'chrome',headless:true});
+try{
+ const page=await browser.newPage({viewport:{width:1440,height:900}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('http://127.0.0.1:5173/',{waitUntil:'networkidle'});
+ await page.locator('#practice-start').click();await page.locator('#custom-training-start').click();
+ await page.locator('[data-add]').click();await page.locator('#custom-target').selectOption('2');
+ const balls=await page.evaluate(()=>window.__noir.physics.balls.filter(b=>!b.pocketed).map(({id,x,z})=>({id,x,z})));
+ await page.locator('.save-layout summary').click();await page.locator('#saved-layout-name').fill('<b>Thế bi ở quán</b>');await page.locator('#saved-layout-notes').fill('Tập cắt mỏng, giữ bi cái.');await page.locator('[data-save-layout]').click();
+ assert.match(await page.locator('[data-custom-status]').innerText(),/Đã lưu/);
+ await page.reload({waitUntil:'networkidle'});await page.locator('#practice-start').click();await page.locator('#saved-training-start').click();
+ assert.equal(await page.locator('.saved-layout-card').count(),1);assert.equal(await page.locator('.saved-layout-card h2 b').count(),0,'Names render as text');
+ await page.screenshot({path:'artifacts/saved-layouts.png'});
+ const downloadPromise=page.waitForEvent('download');await page.locator('[data-export-layouts]').click();const download=await downloadPromise,content=await readFile(await download.path());
+ await page.locator('[data-open-layout]').click();assert.deepEqual(await page.evaluate(()=>window.__noir.physics.balls.filter(b=>!b.pocketed).map(({id,x,z})=>({id,x,z}))),balls);
+ assert.equal(await page.locator('#custom-target').inputValue(),'2');
+ await page.locator('.save-layout summary').click();assert.equal(await page.locator('#saved-layout-notes').inputValue(),'Tập cắt mỏng, giữ bi cái.');
+ await page.locator('#saved-layout-name').fill('Bản sửa');await page.locator('[data-save-layout]').click();await page.locator('[data-my-layouts]').click();
+ assert.equal(await page.locator('.saved-layout-card').count(),1);assert.equal(await page.locator('.saved-layout-card h2').innerText(),'Bản sửa');
+ await page.locator('[data-delete-layout]').click();assert.equal(await page.locator('.saved-layout-card').count(),0);await page.getByRole('button',{name:'Hoàn tác',exact:true}).click();assert.equal(await page.locator('.saved-layout-card').count(),1);
+ const second=await browser.newPage({viewport:{width:390,height:844},hasTouch:true,isMobile:true});
+ await second.goto('http://127.0.0.1:5173/',{waitUntil:'networkidle'});await second.locator('#practice-start').click();await second.locator('#saved-training-start').click();
+ await second.locator('[data-import-layouts]').setInputFiles({name:'the-bi-noir.json',mimeType:'application/json',buffer:content});await second.waitForFunction(()=>document.querySelectorAll('.saved-layout-card').length===1);
+ await second.locator('[data-open-layout]').click();await second.locator('#phone-coach').tap();assert.equal(await second.locator('#custom-target').inputValue(),'2');
+ await second.locator('.save-layout summary').click();await second.locator('#saved-layout-name').fill('Bản từ điện thoại');await second.locator('[data-copy-layout]').tap();await second.locator('[data-my-layouts]').tap();
+ assert.equal(await second.locator('.saved-layout-card').count(),2);
+ await second.locator('[data-import-layouts]').setInputFiles({name:'bad.json',mimeType:'application/json',buffer:Buffer.from('{}')});assert.equal(await second.locator('.saved-layout-card').count(),2);
+ assert.deepEqual(errors,[]);console.log('PASS saved layouts: reload, exact layout and target, safe names, update, undo, export/import across devices, mobile copy, invalid file');
+}finally{await browser.close();}

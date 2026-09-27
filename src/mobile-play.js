@@ -12,9 +12,9 @@ export function mountMobilePlay(scene,cancel){
   game.addEventListener('pointermove',e=>{if(tap&&e.pointerId===tap.id&&Math.hypot(e.clientX-tap.x,e.clientY-tap.y)>10)tap=null;},true);
   game.addEventListener('pointerup',e=>{
     const t=tap;tap=null;if(!t||e.pointerId!==t.id||!t.button.contains(e.target)||Math.hypot(e.clientX-t.x,e.clientY-t.y)>10)return;
-    e.preventDefault();lastTap={button:t.button,time:performance.now()};t.button.click();
+    e.preventDefault();lastTap={button:t.button,time:performance.now(),x:e.clientX,y:e.clientY};t.button.click();
   },true);
-  game.addEventListener('click',e=>{if(e.isTrusted&&lastTap&&performance.now()-lastTap.time<700&&lastTap.button.contains(e.target)){e.preventDefault();e.stopImmediatePropagation();}},true);
+  document.addEventListener('click',e=>{if(e.isTrusted&&lastTap&&performance.now()-lastTap.time<700&&(lastTap.button.contains(e.target)||(e.pointerType==='touch'&&Math.hypot(e.clientX-lastTap.x,e.clientY-lastTap.y)<10))){e.preventDefault();e.stopImmediatePropagation();}},true);
   const views=document.createElement('div');views.id='phone-views';views.innerHTML='<button data-phone-view="top">Từ trên</button><button data-phone-view="cue">Theo cơ</button><button data-phone-view="orbit">3D</button><small>Chạm và kéo thân cơ để xoay. Kéo thanh lực để đánh.</small>';game.append(views);
   views.querySelectorAll('button').forEach(button=>button.onclick=()=>document.querySelector(`[data-view="${button.dataset.phoneView}"]`)?.click());
   function drawers(which=null){
