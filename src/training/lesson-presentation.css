@@ -1,0 +1,25 @@
+/* Lesson coaching shares the club table shell with the custom-layout editor. */
+#game.lesson-layout #training-panel .coach-title{font:650 27px/1.25 'Segoe UI',Arial,sans-serif;letter-spacing:-.6px;margin:20px 0 12px;color:#f1ce7a}
+#game.lesson-layout #training-panel .coach-goal{color:#bed2e4;font-size:13px;padding-bottom:16px;border-bottom:1px solid #35577366}
+#game.lesson-layout #training-panel .coach-select{display:grid;grid-template-columns:1fr;gap:9px;font-size:12px;color:#e3c98c;margin:18px 0}
+#game.lesson-layout #training-panel .coach-compact>.coach-stance{padding:15px;border:1px solid #2e516c;border-radius:13px;background:#081d30b3;color:#e8d39f}
+#game.lesson-layout #training-panel .coach-stance small{color:#a9c2d5;line-height:1.5}
+#game.lesson-layout #training-panel .coach-diagram{background:#061827;border-color:#315974;border-radius:13px}
+#game.lesson-layout #training-panel .coach-key{border:1px solid #9b7c3e66;background:#68502730;padding:12px;color:#ffdc87}
+#game.lesson-layout #training-panel .coach-tip{border-left-color:#eac46e;background:#67532730;color:#e8d9b6;padding:12px;border-radius:8px}
+#game.lesson-layout #training-panel .coach-spin{color:#bdd1e2}
+#game.lesson-layout #training-panel .coach-spin summary{font-size:13px;color:#e8d3a0}
+#game.lesson-layout #training-panel .coach-destination{color:#a7dcec}
+#game.lesson-layout #training-panel .coach-footer{position:sticky;bottom:-22px;margin:16px -4px -22px;padding:14px 4px 18px;background:#041320f5;border-top:1px solid #40607a;z-index:3;display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:7px}
+#game.lesson-layout #training-panel [data-execute],#game.lesson-layout .training-result-card [data-retry]{background:linear-gradient(115deg,#ffe3a0,#e8b951);color:#21190c;border-color:#ffe4a3;font-weight:650;box-shadow:0 0 14px #eabd5328}
+#game.lesson-layout #training-panel [data-save][aria-pressed=true]{color:#f4d286;border-color:#cca34f;background:#65512444}
+#game.lesson-layout #training-feedback{font-size:13px;color:#a9dfdc}
+#game.lesson-layout .training-result-card{background:linear-gradient(135deg,#0b2139f5,#020c19fa);border-color:#5489b4;box-shadow:0 12px 45px #0009,0 0 24px #228dff30;border-radius:20px}
+#game.lesson-layout .training-result-card h2{color:#f0cc79}
+#game.lesson-layout .training-result-card button{border:1px solid #355c7b;background:#10283e}
+#game.lesson-layout #training-panel button:disabled{box-shadow:none}
+@media(min-width:1001px){#game.lesson-layout #training-result{inset:90px 150px 32px 408px}}
+@media(min-width:1001px) and (max-height:800px){#game.lesson-layout #training-result{inset:64px 126px 18px 366px}#game.lesson-layout #training-panel .coach-title{font-size:24px}#game.lesson-layout #training-panel .coach-footer{bottom:-16px;margin-bottom:-16px}}
+#game.lesson-layout.phone-play #training-panel .coach-title{font-size:22px;margin:14px 0 10px}
+#game.lesson-layout.phone-play #training-panel .coach-footer{bottom:-12px;margin-bottom:-12px;padding-bottom:12px}
+@media(prefers-reduced-motion:reduce){#game.lesson-layout #training-panel{scroll-behavior:auto}}

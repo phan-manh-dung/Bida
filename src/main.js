@@ -9,6 +9,12 @@ import { mountSpinControl } from './cue-spin.js';
 import { mountTraining } from './training/index.js';
 import {mountMobilePlay} from './mobile-play.js';
 import {localPointer} from './screen-coordinates.js';
+import {mountNavigation} from './navigation.js';
+import {mountMatchPresentation} from './match-presentation.js';
+import {mountSettingsPresentation} from './settings-presentation.js';
+import {mountFreePractice} from './free-practice.js';
+import {mountMouseShot} from './mouse-shot.js';
+import './cue-controls-compact.css';
 
 const paths = {
   menu: '<path d="M4 6h16M4 12h16M4 18h16"/>',
@@ -81,8 +87,9 @@ $('#app').innerHTML = `
   <dialog id="help-dialog" aria-labelledby="help-title">${close}<p class="overline">CÁCH CHƠI</p><h2 id="help-title">Ngắm. Kéo. Thả.</h2><ol><li>Chạm hoặc nhấp lên mặt bàn để chọn hướng ngắm.</li><li>Kéo cây cơ ở mép phải từ trên xuống. Kéo càng xa, lực càng mạnh. Thả để đánh.</li><li>Kéo cơ lên lại vị trí ban đầu hoặc nhấn Escape để hủy cú đánh.</li><li>Ở góc 3D, giữ chuột phải để xoay nhẹ; bàn tự vừa màn hình, đã khóa phóng to/thu nhỏ. Mở menu ba gạch → Góc nhìn để chọn 3D, Từ trên hoặc Theo cơ.</li></ol><p class="setting-note">Bàn phím: ← → chỉnh hướng, Shift để chỉnh nhỏ. Khi chọn cây cơ bằng Tab, ↓ ↑ chỉnh lực và Enter để đánh. Space giữ để lấy lực, thả để đánh.</p><p class="setting-note">Luyện tập một người, bi vào theo thứ tự bất kỳ. Bi trắng vào lỗ sẽ tự đặt lại. Chọn điểm chạm trên quả bi cạnh thanh cơ: trên cu-lê, dưới trô, trái/phải ép phê. Chạm vào tâm quả bi để đặt lại điểm chạm.</p></dialog>
 `;
 
+mountSettingsPresentation();
 let scene, drag = null, spaceStart = null, spaceFrame = null, power = 0, releasing = false;
-let match=null,lobby,matchHUD,training,mode='home';
+let match=null,lobby,matchHUD,training,navigation,matchPresentation,freePractice,mode='home';
 const spinControl=mountSpinControl($('#cue-control'),point=>{if(scene){scene.tip=point;scene.bridgeKey=null;}});
 const canUserShoot=()=>mode==='practice'||mode==='training'&&!!training?.canShoot||mode==='match'&&!!match?.canHumanShoot;
 const audio = new PoolAudio();
@@ -118,7 +125,7 @@ function renderState() {
   $('#pull-cue').setAttribute('aria-disabled', String(disabled));
   $('#cue-control').classList.toggle('disabled', disabled);
   spinControl.setEnabled(!disabled&&!drag&&spaceStart===null);
-  $('#cue-instructions').textContent = physics.moving ? 'Đợi bi dừng' : count === total ? 'Mở menu · Ván mới' : 'Kéo xuống · Thả';
+  $('#cue-instructions').textContent = physics.moving ? 'Đợi bi dừng' : matchMedia('(pointer: coarse)').matches ? 'Kéo xuống · Thả' : 'Giữ chuột · Kéo lùi · Thả';
 }
 function setPower(value) {
   power = Math.min(1, Math.max(0, value));
@@ -137,6 +144,7 @@ function lockAim(locked) {
   scene.inputLocked = locked || !canUserShoot(); scene.controls.enabled = !locked;
 }
 function cancelPull() {
+  scene?.cancelMouseShot?.();
   scene?.cancelTouchAim?.();
   scene?.cancelPlacement?.();
   drag = null; spaceStart = null; cancelAnimationFrame(spaceFrame);
@@ -164,7 +172,13 @@ function releaseShot() {
 }
 
 const pull = $('#pull-cue');
+if(scene)mountMouseShot(scene,{
+  canStart:()=>canUserShoot()&&physics.canShoot&&!scene.inputLocked&&!scene.placingCue&&!releasing&&!drag&&spaceStart===null&&!document.querySelector('dialog[open]'),
+  start:()=>{audio.unlock().catch(()=>{});setPower(0);lockAim(true);spinControl.setEnabled(false);$('#cue-control').classList.add('dragging');},
+  power:setPower,release:releaseShot,cancel:cancelPull
+});
 pull.addEventListener('pointerdown', event => {
+  if(event.pointerType==='mouse')return;
   if (!event.isPrimary || event.button !== 0 || !scene || !canUserShoot() || scene.placingCue || !physics.canShoot || releasing || document.querySelector('dialog[open]')) return;
   event.preventDefault(); pull.focus({ preventScroll: true });
   audio.unlock().catch(() => {});
@@ -244,7 +258,7 @@ document.querySelectorAll('[data-layout]').forEach(button => button.addEventList
 }));
 function setCloth(color) {
   const selected = ['gray', 'blue', 'green', 'wine'].includes(color) ? color : 'gray';
-  scene?.setCloth(selected); save('cloth', selected);
+  scene?.setCloth(selected); save(mode==='practice'?'free-cloth':mode==='match'?'match-cloth':$('#game').classList.contains('custom-layout')?'custom-cloth':$('#game').classList.contains('lesson-layout')?'lesson-cloth':'cloth', selected);
   document.querySelectorAll('[data-cloth]').forEach(button => {
     const active = button.dataset.cloth === selected;
     button.setAttribute('aria-pressed', String(active)); button.innerHTML = active ? icon('check') : '';
@@ -272,14 +286,21 @@ function renderAudio() {
     if (state) state.textContent = `${clips.length} bản thu đã sẵn sàng`;
   }
 }
-$('#sound').addEventListener('change', event => { audio.enabled = event.target.checked; audio.unlock().catch(() => {}); });
+$('#sound').addEventListener('change', event => { audio.enabled = event.target.checked; save('sound',String(audio.enabled)); audio.unlock().catch(() => {}); });
+$('#reset-settings').addEventListener('click',()=>{
+  setCloth(mode==='match'||mode==='practice'||$('#game').classList.contains('custom-layout')||$('#game').classList.contains('lesson-layout')?'blue':'gray');
+  $('#guide').checked=mode==='match'?match?.config.aid!=='none':true;
+  $('#guide').dispatchEvent(new Event('change'));
+  audio.enabled=audio.ready;save('sound',String(audio.enabled));renderAudio();
+});
 document.querySelectorAll('[data-audio]').forEach(input => input.addEventListener('change', async () => {
   try { await audio.loadFiles(input.dataset.audio, input.files); audio.enabled = true; renderAudio(); }
   catch (error) { $('#audio-status').textContent = `Không đọc được bản thu. ${error.message}`; }
 }));
-audio.loadManifest().then(renderAudio).catch(() => { $('#audio-status').textContent = 'Không tải được bản thu âm thanh. Bạn có thể chọn tệp bên dưới.'; });
+audio.loadManifest().then(()=>{audio.enabled=read('sound','true')==='true';renderAudio();}).catch(() => { $('#audio-status').textContent = 'Không tải được bản thu âm thanh. Bạn có thể chọn tệp bên dưới.'; });
 function closeDialogs(){document.querySelectorAll('dialog[open]').forEach(d=>d.close());}
 function renderMatch(m){
+  matchPresentation?.render(m);
   if(!m.canHumanShoot)spinControl.reset();
   if(m.foulNotice){releasing=false;cancelPull();$('#cue-control').classList.remove('releasing');}
   matchHUD?.render(m);
@@ -287,8 +308,10 @@ function renderMatch(m){
   if(scene){scene.inputLocked=!m.canHumanShoot;scene.showCue=m.phase==='lag-ready'||m.phase==='playing';scene.pocketLabels.visible=m.phase==='playing'&&m.config.game==='8'&&!m.breaking;}
   renderState();
 }
-function enterGame(){closeDialogs();$('#game').classList.toggle('match-layout',mode==='match');$('#game').hidden=false;if(scene){scene.suspended=false;scene.resize();scene.setView('top');document.querySelectorAll('[data-view]').forEach(b=>{b.classList.toggle('active',b.dataset.view==='top');b.setAttribute('aria-pressed',String(b.dataset.view==='top'));});}}
-function goHome(){
+function enterGame(){closeDialogs();$('#game').classList.toggle('free-layout',mode==='practice');document.querySelectorAll('.match-navigation [aria-current]').forEach(b=>{b.classList.remove('active');b.removeAttribute('aria-current');});const nav=document.querySelector(mode==='practice'?'[data-match-practice]':'[data-match-setup]');nav?.classList.add('active');nav?.setAttribute('aria-current','page');$('#game').classList.toggle('match-layout',mode==='match');$('#game').hidden=false;if(scene){const custom=$('#game').classList.contains('custom-layout');const lesson=$('#game').classList.contains('lesson-layout');scene.setClubPresentation(mode==='match'||mode==='practice'||custom||lesson);if(mode==='training')setCloth(read(custom?'custom-cloth':lesson?'lesson-cloth':'cloth',custom||lesson?'blue':'gray'));scene.suspended=false;scene.resize();scene.setView('top');document.querySelectorAll('[data-view]').forEach(b=>{b.classList.toggle('active',b.dataset.view==='top');b.setAttribute('aria-pressed',String(b.dataset.view==='top'));});}}
+function goHome(){navigation?.home();renderHome();}
+function renderHome(){
+  $('#game').classList.remove('free-layout','free-panel-open');
   scene?.closePhonePanels?.();
   training?.close();$('#game').classList.remove('training-layout');
   match?.dispose();match=null;releasing=false;mode='home';cancelPull();closeDialogs();
@@ -297,35 +320,54 @@ function goHome(){
   $('#game').hidden=true;matchHUD?.render(null);lobby?.show();
 }
 function startPractice(){
+  navigation?.enter('practice');
+  if(lobby)lobby.root.hidden=true;
   training?.close();$('#game').classList.remove('training-layout');
   $('#menu-dialog .muted').textContent='Người chơi tự do · Luyện tập 15 bi';
   $('#guide').checked=read('guide','true')==='true';
-  match?.dispose();match=null;mode='practice';releasing=false;physics.reset('rack');enterGame();
-  scene.angle=0;scene.inputLocked=false;scene.showCue=true;scene.ghostEnabled=true;scene.aimVisible=$('#guide').checked;scene.followBall=false;scene.pocketLabels.visible=false;scene.syncBalls(0);matchHUD.render(null);renderState();
+  match?.dispose();match=null;mode='practice';releasing=false;physics.reset('rack');enterGame();setCloth(read('free-cloth','blue'));
+  scene.angle=0;scene.inputLocked=false;scene.showCue=true;scene.ghostEnabled=true;scene.aimVisible=$('#guide').checked;scene.followBall=false;scene.pocketLabels.visible=false;scene.syncBalls(0);matchHUD.render(null);freePractice?.open();renderState();
 }
 function startMatch(config){
   training?.close();$('#game').classList.remove('training-layout');
   if(!scene)throw new Error('Không mở được bàn 3D. Hãy bật tăng tốc đồ họa trong trình duyệt.');
-  match?.dispose();match=null;mode='match';releasing=false;enterGame();
+  navigation?.enter('match',config);
+  match?.dispose();match=null;mode='match';releasing=false;setCloth(read('match-cloth','blue'));enterGame();
   scene.aimVisible=config.aid!=='none';scene.ghostEnabled=config.aid==='ghost';scene.followBall=false;
   $('#guide').checked=scene.aimVisible;
   match=new PoolMatch(physics,scene,config,renderMatch);renderMatch(match);
 }
 matchHUD=mountMatchHUD({choose:action=>match?.choose(action),home:goHome});
+matchPresentation=mountMatchPresentation({home:goHome,setup:()=>{renderHome();lobby.showSetup();},practice:startTraining,settings:()=>openDialog('#settings-dialog'),help:()=>openDialog('#help-dialog'),views:()=>openDialog('#menu-dialog')});
+if(scene)freePractice=mountFreePractice({physics,scene,back:startTraining,cancel:cancelPull,changed:renderState,isBusy:()=>releasing||physics.moving});
 if(scene)training=mountTraining({physics,scene,home:goHome,practice:startPractice,
+  navigate:(route,data)=>navigation?.enter(route,data),
+  setup:()=>{renderHome();lobby.showSetup();},help:()=>openDialog('#help-dialog'),
   changed:renderState,
   isBusy:()=>releasing||physics.moving,
   resetControls:()=>{cancelPull();spinControl.reset();},
   prepareShot:shot=>{cancelPull();scene.angle=shot.angle;spinControl.setPoint(shot.tip);scene.guideKey=null;scene.bridgeKey=null;if(scene.view==='cue')scene.setView('cue');},
   enter:()=>{match?.dispose();match=null;mode='training';releasing=false;lobby.root.hidden=true;$('#game').classList.add('training-layout');enterGame();scene.inputLocked=false;scene.showCue=true;scene.followBall=false;scene.pocketLabels.visible=false;matchHUD.render(null);},
 });
-function startTraining(){if(!training)return;goHome();lobby.root.hidden=true;training.open();}
-lobby=mountHomepage({startMatch,startPractice,startTraining,goHome,settings:()=>openDialog('#settings-dialog'),help:()=>openDialog('#help-dialog')});
+function startTraining(){if(!training)return;renderHome();navigation?.enter('training');lobby.root.hidden=true;training.open();}
+lobby=mountHomepage({startMatch,startPractice,startTraining,goHome,onSetup:()=>navigation?.enter('setup'),settings:()=>openDialog('#settings-dialog'),help:()=>openDialog('#help-dialog')});
+navigation=mountNavigation((route,data)=>{
+  renderHome();
+  if(route==='setup')lobby.showSetup();
+  else if(route==='training')startTraining();
+  else if(route==='practice')startPractice();
+  else if(route==='match'){lobby.root.hidden=true;startMatch(data);}
+  else if(['saved','custom','lessons','lesson'].includes(route)){lobby.root.hidden=true;training?.restore(route,data);}
+});
 $('#help-dialog .setting-note:last-child').textContent='Chơi với máy: chọn 9-ball hoặc 8-ball, thi băng để giành quyền chọn người phá. 8-ball cần gọi bi và lỗ trước cú đánh; 9-ball phải chạm bi nhỏ nhất trước. Sau lỗi, kéo bi trắng đến vị trí hợp lệ. Tập luyện: đánh tự do, không tính thắng thua.';
 $('#help-dialog ol li:nth-child(4)').textContent='Menu ba gạch → Góc nhìn → Theo cơ: giữ chuột phải để xoay, cuộn để nhìn gần/xa. Điện thoại dùng hai ngón kéo hoặc chụm. Thanh quan sát có nút nâng/hạ tầm mắt và Về đường ngắm. Một chạm trên bàn vẫn dùng để ngắm; xoay góc nhìn không đổi hướng cơ.';
 $('#help-dialog ol li:first-child').textContent='Máy tính: nhấp mặt bàn để ngắm. Điện thoại: chạm và kéo trực tiếp thân cơ để xoay hướng; chạm bi mục tiêu không đổi hướng ngắm. Cầm điện thoại ngang để dùng trọn diện tích bàn.';
 $('#help-dialog ol li:nth-child(4)').textContent='Nút Góc nhìn trên điện thoại mở các chế độ quan sát. Theo cơ: hai ngón kéo/chụm để xoay và zoom; máy tính dùng chuột phải và con lăn. Hướng dẫn nằm trong nút HLV / Đặt bi. Nút Về đường ngắm đưa camera về sau bi cái.';
 if(scene)scene.canInteract=canUserShoot;
 if(scene)scene.onAimAid=()=>training?.markAssisted();
+$('#help-dialog ol li:nth-child(1)').textContent='Máy tính: di chuột trên bàn để xoay cơ. Ở góc Theo cơ, di chuột ngang để chỉnh hướng; giữ Shift để ngắm chậm hơn.';
+$('#help-dialog ol li:nth-child(2)').textContent='Giữ chuột trái trên bàn, kéo ngược hướng cơ để lấy lực rồi thả để đánh. Góc Theo cơ: kéo chuột xuống. Điện thoại: kéo trên cây cơ để xoay, dùng thanh cơ bên phải để lấy lực.';
+$('#help-dialog ol li:nth-child(3)').textContent='Đưa chuột về vị trí bắt đầu kéo hoặc nhấn Escape để hủy cú đánh. Chỉ nhấp chuột sẽ không đánh.';
+$('#help-dialog ol li:nth-child(4)').textContent='Theo cơ: lượt bạn nhìn theo hướng ngắm, lượt đối thủ nhìn ngang toàn bàn. Cuộn chuột để nâng/hạ góc nhìn, không zoom. Điện thoại kéo hai ngón lên/xuống để đổi độ cao.';
 goHome();renderState();renderAudio();mountMobilePlay(scene,cancelPull);
 if (import.meta.env.DEV) window.__noir = { physics, scene, audio, cancelPull, get match(){return match;},startMatch,startPractice,goHome };

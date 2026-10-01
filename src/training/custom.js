@@ -5,8 +5,9 @@ import {validPosition} from './custom-solver.js';
 import {coachView} from './view.js';
 import {localPointer} from '../screen-coordinates.js';
 import {downloadLayouts,validateLayout} from './saved-layouts.js';
+import './custom-presentation.css';
 
-export function mountCustom({panel,resultBox,physics,scene,overlay,enter,back,resetControls,prepareShot,isBusy,changed,getHand,setHand,layoutStore,openSaved}){
+export function mountCustom({panel,resultBox,physics,scene,overlay,enter,onOpen,back,resetControls,prepareShot,isBusy,changed,getHand,setHand,layoutStore,openSaved}){
   let active=false,phase='edit',selected=0,target=1,balls=[],snapshot=[],shots=[],previews=[],variant=0,worker=null,message='';
   const canvas=scene.renderer.domElement;
   let savedId=null,savedName='',savedNotes='';
@@ -15,8 +16,8 @@ export function mountCustom({panel,resultBox,physics,scene,overlay,enter,back,re
   function cancel(){worker?.terminate();worker=null;}
   function sync(){loadLayout(physics,layout());scene.syncBalls(0);scene.guideKey=null;scene.bridgeKey=null;scene.pocketLabels.visible=true;scene.showCue=phase==='ready';scene.inputLocked=phase!=='ready';scene.aimVisible=scene.ghostEnabled=phase==='ready'&&!shots.length;changed();}
   function show(){overlay.clear();scene.aimVisible=scene.ghostEnabled=phase==='ready'&&!shots.length;if(shots.length&&phase==='ready')overlay.show({...layout(),pocket:shots[variant].pocket},previews[variant],shots[variant],getHand());}
-  function open(record=null){cancel();active=true;phase='edit';balls=record?copy(record.balls):[{id:0,x:0,z:.4},{id:1,x:2.7,z:1.1}];snapshot=copy(balls);selected=0;target=record?.target??1;savedId=record?.id??null;savedName=record?.name??'';savedNotes=record?.notes??'';shots=[];previews=[];message=record?'Đã mở thế bi đã lưu. Có thể tập ngay hoặc chỉnh sửa rồi lưu lại.':'';enter();panel.hidden=false;resetControls();sync();render();}
-  function close(){cancel();active=false;overlay.clear();resultBox.hidden=true;resultBox.replaceChildren();}
+  function open(record=null){onOpen?.(record);cancel();active=true;document.querySelector('#game').classList.add('custom-layout');phase='edit';balls=record?copy(record.balls):[{id:0,x:0,z:.4},{id:1,x:2.7,z:1.1}];snapshot=copy(balls);selected=0;target=record?.target??1;savedId=record?.id??null;savedName=record?.name??'';savedNotes=record?.notes??'';shots=[];previews=[];message=record?'Đã mở thế bi đã lưu. Có thể tập ngay hoặc chỉnh sửa rồi lưu lại.':'';enter();panel.hidden=false;resetControls();sync();render();}
+  function close(){cancel();if(active)scene.setClubPresentation(false);active=false;document.querySelector('#game').classList.remove('custom-layout');overlay.clear();resultBox.hidden=true;resultBox.replaceChildren();}
   function edit(){if(isBusy())return;cancel();phase='edit';balls=copy(snapshot);shots=[];previews=[];message='';resetControls();show();sync();render();}
   function ready(){snapshot=copy(balls);phase='ready';message='Chạm bàn để ngắm, tự chỉnh đầu cơ và kéo lực để đánh.';sync();render();}
   function restore(){if(isBusy())return;balls=copy(snapshot);phase='ready';resetControls();sync();show();message='Đã xếp lại đúng thế bi ban đầu.';render();}
@@ -53,13 +54,13 @@ export function mountCustom({panel,resultBox,physics,scene,overlay,enter,back,re
   function render(){
     resultBox.hidden=true;resultBox.replaceChildren();
     const editing=phase==='edit',locked=phase==='shooting',analysing=phase==='analysing';
-    panel.innerHTML=`<button data-back ${locked?'disabled':''}>← Tập luyện</button><h2>Tự đặt thế bi</h2>
+    panel.innerHTML=`<button data-back ${locked?'disabled':''}>← Tập luyện</button><h2 class="custom-title">Tự đặt <span>thế bi</span></h2>
       <fieldset class="coach-stance"><legend>Bạn cầm cơ bằng tay nào?</legend>${['left','right'].map(h=>`<button data-hand="${h}" aria-pressed="${getHand()===h}" ${locked||analysing?'disabled':''}>Tay ${h==='left'?'trái':'phải'}</button>`).join('')}</fieldset>
       ${editing?`<p>Chọn bi rồi chạm lên bàn để đặt. Có thể đặt bi cái và tối đa 15 bi màu.</p>
       <label>Bi đang đặt <select id="custom-ball">${balls.map(b=>`<option value="${b.id}" ${b.id===selected?'selected':''}>${b.id===0?'Bi cái':`Bi ${b.id}`}</option>`).join('')}</select></label>
       <div class="training-actions"><button data-add ${balls.length===16?'disabled':''}>+ Thêm bi</button><button data-remove ${!selected||balls.length<=2?'disabled':''}>Xóa bi chọn</button></div>
       <label>Bi mục tiêu <select id="custom-target">${balls.filter(b=>b.id).map(b=>`<option value="${b.id}" ${target===b.id?'selected':''}>Bi ${b.id}</option>`).join('')}</select></label><p class="training-note">HLV tìm cách vào bi được chọn; các bi còn lại vẫn cản đường và va chạm bình thường.</p>
-      <button data-ready ${!getHand()?'disabled':''}>Bắt đầu đánh →</button>${!getHand()?'<p>Chọn tay cầm cơ ở trên để bắt đầu.</p>':''}`:
+      <button data-ready ${!getHand()?'disabled':''}><span aria-hidden="true">▷</span> Bắt đầu đánh <span aria-hidden="true">→</span></button>${!getHand()?'<p class="custom-hand-note">Chọn tay cầm cơ ở trên để bắt đầu.</p>':''}`:
       `<div class="training-actions"><button data-edit ${locked?'disabled':''}>Sửa thế bi</button><button data-analyse ${locked||analysing||phase==='review'?'disabled':''}>Nhờ HLV phân tích</button>${analysing?'<button data-cancel>Dừng phân tích</button>':''}</div>`}
       <details class="save-layout"><summary>Lưu thế bi${savedId?' · đã có trong danh sách':''}</summary><p>Lưu vị trí trước cú đánh hiện tại, bi mục tiêu và ghi chú.</p><label>Tên thế bi <input id="saved-layout-name" maxlength="80" placeholder="Ví dụ: Cắt mỏng sát băng"></label><label>Ghi chú <textarea id="saved-layout-notes" maxlength="500" placeholder="Điều muốn tập, lực đánh, lỗi hay gặp…"></textarea></label><div class="training-actions"><button data-save-layout ${locked||analysing?'disabled':''}>${savedId?'Cập nhật thế bi':'Lưu vào danh sách'}</button>${savedId?`<button data-copy-layout ${locked||analysing?'disabled':''}>Lưu bản mới</button>`:''}<button data-export-current ${locked||analysing?'disabled':''}>Xuất thế bi này</button></div></details><button data-my-layouts ${locked||analysing?'disabled':''}>Thế bi của tôi</button>
       <p data-custom-status role="status">${message}</p><div data-custom-coach></div>`;

@@ -1,0 +1,51 @@
+#training-library.lesson-library{padding:0 max(24px,calc((100vw - 1440px)/2)) 32px;background:linear-gradient(0deg,#010a16f2,#02101b99 60%,#020b15aa),url('/images/noir-club-hero.png') center/cover fixed;color:#e8f1fa}
+#training-library.lesson-library .lessons-header{min-height:80px;border-bottom:1px solid #405b753b;display:flex;align-items:center;gap:65px;margin-bottom:30px}
+#training-library.lesson-library .lessons-logo{background:none;border:0;padding:0;font-size:38px;font-weight:650;letter-spacing:4px;line-height:1;border-radius:0}
+.lessons-logo small{display:block;font-size:8px;letter-spacing:3px;margin-top:8px}
+#training-library.lesson-library .lessons-header nav{justify-content:flex-start;gap:36px;align-items:center}
+#training-library.lesson-library .lessons-header nav button,#training-library.lesson-library .lessons-header nav>span{display:flex;align-items:center;gap:10px;background:none;border:0;font-size:13px;color:#c3d4e5;padding:18px 0}
+#training-library.lesson-library .lessons-header nav>span{color:#e7c56d;border-bottom:2px solid #e7c56d}
+.lessons-header nav svg{width:21px;height:21px}
+#training-library.lesson-library>nav{margin:0 0 16px;align-items:center}
+#training-library.lesson-library button{border-color:#335971;background:#071b2bd9;border-radius:11px;padding:11px 17px}
+#training-library.lesson-library [data-practice]{color:#e8c970;border-color:#b39246;background:#04111aa8}
+#training-library.lesson-library>.eyebrow{font-size:11px;letter-spacing:3px;color:#e6c977;margin:12px 0 10px}
+#training-library.lesson-library>h1{font-family:'Times New Roman',Georgia,serif;font-size:clamp(30px,3.6vw,52px);line-height:1.2;font-weight:650;letter-spacing:-1px;margin:0 0 12px}
+#training-library.lesson-library>h1 span{color:#efc66c}
+#training-library.lesson-library>p{font-size:15px;color:#c1d6e6;margin:10px 0 20px}
+#training-library.lesson-library>label{display:flex;align-items:center;gap:16px;font-size:14px;margin:18px 0}
+#training-library.lesson-library #training-filter{min-width:220px;padding:11px 14px;border:1px solid #375d76;border-radius:12px;background:#031522;color:#ecf4fc;font-size:13px}
+#training-library.lesson-library .lesson-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin:18px 0}
+#training-library.lesson-library .lesson-card{position:relative;isolation:isolate;overflow:hidden;min-height:168px;padding:20px;gap:9px;border:1px solid #345e7b;border-radius:15px;background:linear-gradient(100deg,#061d2d,#020d19);box-shadow:0 12px 22px #0003;transition:transform .18s,border-color .18s}
+#training-library.lesson-library .lesson-card::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,#041321f2 10%,#05172970 60%,#05172911),linear-gradient(0deg,#02101bec 5%,transparent 85%);pointer-events:none}
+#training-library.lesson-library .lesson-thumbnail{position:absolute;right:-26px;top:0;width:88%;height:100%;z-index:-2;transform:perspective(500px) rotateX(22deg) rotate(-12deg);filter:drop-shadow(0 4px 5px #0008)}
+#training-library.lesson-library .lesson-card>small{font-size:12px;color:#9bbfd7}
+#training-library.lesson-library .lesson-card>strong{font-size:18px;color:#f0f5fa;font-weight:650;line-height:1.35;letter-spacing:-.3px}
+#training-library.lesson-library .lesson-card .lesson-state{display:flex;align-items:center;gap:8px;font-size:11px;color:#c3d9e9;width:fit-content;max-width:100%;padding:4px 8px;border-radius:16px;background:#13304988}
+#training-library.lesson-library .lesson-card.is-complete{border-color:#baa054}
+#training-library.lesson-library .lesson-card.is-complete .lesson-state{background:#90783944;color:#ffe6a0}
+#training-library.lesson-library .lesson-card.is-independent{border-color:#5bac94}
+#training-library.lesson-library .lesson-card.is-independent .lesson-state{background:#24645055;color:#b5f7db}
+#training-library.lesson-library .lesson-card .lesson-meta{font-size:12px;line-height:1.5;color:#b3cfe3;margin-top:auto;padding-top:5px;padding-right:0}
+#training-library.lesson-library .lesson-card:hover{transform:translateY(-3px);border-color:#edc46c}
+#training-library.lesson-library button:focus-visible,#training-library.lesson-library select:focus-visible{outline:2px solid #f3d489;outline-offset:3px}
+#training-library.lesson-library .training-hand-setup{background:#071b2adb;border:1px solid #876e3f;border-radius:13px;padding:12px 16px;margin:15px 0;color:#dcc78e}
+#training-library.lesson-library .training-hand-setup p{font-size:12px;color:#a5bdd0;display:inline-block;margin:4px 20px 4px 0}
+#training-library.lesson-library .training-hand-setup button{min-height:38px;font-size:12px;padding:8px 12px;margin-right:8px}
+#training-library.lesson-library>details{border-top:1px solid #3f5e753b;padding-top:16px;font-size:12px;color:#8ca9c0}
+#training-library.lesson-library>details summary{font-size:12px}
+@media(max-width:1150px){#training-library.lesson-library .lesson-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:850px){#training-library.lesson-library .lesson-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#training-library.lesson-library .lessons-header{gap:28px}#training-library.lesson-library .lessons-header nav{gap:20px}}
+@media(max-width:540px){
+ #training-library.lesson-library{padding:0 18px 28px}
+ #training-library.lesson-library .lessons-header{flex-wrap:wrap;gap:14px;padding:20px 0 0;margin-bottom:22px}
+ #training-library.lesson-library .lessons-header nav{gap:22px;width:100%;justify-content:space-between}
+ #training-library.lesson-library .lessons-header nav button,#training-library.lesson-library .lessons-header nav>span{font-size:11px;gap:6px;padding:12px 0}
+ #training-library.lesson-library .lessons-header nav svg{width:17px}
+ #training-library.lesson-library .lesson-grid{grid-template-columns:1fr;gap:14px}
+ #training-library.lesson-library .lesson-card{min-height:174px}
+ #training-library.lesson-library>h1{font-size:32px;line-height:1.25}
+ #training-library.lesson-library #training-filter{min-width:0;flex:1}
+ #training-library.lesson-library .training-hand-setup button{margin-top:7px}
+}
+@media(prefers-reduced-motion:reduce){#training-library.lesson-library .lesson-card{transition:none}}

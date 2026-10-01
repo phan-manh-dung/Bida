@@ -1,4 +1,8 @@
 import './training.css';
+import './lesson-presentation.css';
+import './saved-library.css';
+import {decorateLessonLibrary,lessonThumbnail} from './lesson-library.js';
+import {renderTrainingHub} from './hub.js';
 import {coachView} from './view.js';
 import {LESSONS,SOURCES,getLesson} from './catalog.js';
 import rawSolutions from './solutions.json';
@@ -12,7 +16,7 @@ import {createLayoutStore,renderSavedLayouts} from './saved-layouts.js';
 
 // The host owns navigation, the live physics instance and cue controls.
 // This module owns lessons, progress, feedback and its removable visual overlay.
-export function mountTraining({physics,scene,enter,home,practice,resetControls,prepareShot,isBusy,changed}){
+export function mountTraining({physics,scene,enter,home,practice,setup,help,navigate,resetControls,prepareShot,isBusy,changed}){
   let storage;try{storage=window.localStorage;}catch{}
   let hand=null,wide=false,pendingLesson=null;
   try{const saved=storage?.getItem('noir:training:hand');if(['left','right'].includes(saved))hand=saved;}catch{}
@@ -27,21 +31,19 @@ export function mountTraining({physics,scene,enter,home,practice,resetControls,p
   let filter='all';
   const cache=new Map();
   const layoutStore=createLayoutStore(storage);
-  const custom=mountCustom({panel,resultBox,physics,scene,overlay,enter,back:open,resetControls,prepareShot,isBusy,changed,getHand:()=>hand,setHand:chooseHand,layoutStore,openSaved});
-  function openSaved(){open();renderSavedLayouts(library,layoutStore,{back:open,create:()=>{library.hidden=true;custom.open();},open:record=>{library.hidden=true;custom.open(record);}});}
+  const custom=mountCustom({panel,resultBox,physics,scene,overlay,enter,onOpen:record=>navigate?.('custom',record),back:open,resetControls,prepareShot,isBusy,changed,getHand:()=>hand,setHand:chooseHand,layoutStore,openSaved});
+  function openSaved(){open(false);navigate?.('saved');library.classList.remove('training-hub');renderSavedLayouts(library,layoutStore,{back:open,home,create:()=>{library.hidden=true;custom.open();},open:record=>{library.hidden=true;custom.open(record);}});}
   function renderHub(){
-    library.innerHTML='<button data-home>← Trang chủ</button><p class="eyebrow">TẬP LUYỆN</p><h1>Chọn cách luyện tập</h1><div class="lesson-grid"><button class="lesson-card" id="training-start"><strong>Học từng thế bi</strong><span>Bài mẫu, hướng dẫn và theo dõi tiến bộ.</span></button><button class="lesson-card" id="custom-training-start"><strong>Tự đặt thế bi & HLV</strong><span>Đặt bi tùy ý, tự đánh hoặc nhờ HLV phân tích.</span></button><button class="lesson-card" id="free-practice-start"><strong>Bàn tập tự do</strong><span>Xếp đủ 15 bi và tập đánh.</span></button></div>';
-    library.querySelector('[data-home]').onclick=home;
-    library.querySelector('#training-start').onclick=renderLibrary;
-    const saved=document.createElement('button');saved.className='lesson-card';saved.id='saved-training-start';saved.innerHTML='<strong>Thế bi của tôi</strong><span>Mở thế bi đã lưu, sao lưu hoặc nhập từ thiết bị khác.</span>';saved.onclick=openSaved;library.querySelector('.lesson-grid').append(saved);
-    library.querySelector('#custom-training-start').onclick=()=>{lesson=null;library.hidden=true;custom.open();};
-    library.querySelector('#free-practice-start').onclick=()=>{close();practice();};
+    library.classList.remove('saved-library','lesson-library');
+    renderTrainingHub(library,{home,setup,help,lessons:renderLibrary,saved:openSaved,custom:()=>{lesson=null;library.hidden=true;custom.open();},practice:()=>{close();practice();}});
   }
   function previews(){return solutions[lesson.id].map((shot,i)=>{const key=lesson.id+':'+i;if(!cache.has(key))cache.set(key,simulateLesson(lesson,shot,true));return cache.get(key);});}
   function renderLibrary(){
+    navigate?.('lessons');library.classList.remove('saved-library');
+    library.classList.remove('training-hub');
     const done=LESSONS.filter(l=>progress[l.id]?.completed).length;
     library.innerHTML=`<nav><button data-home>← Trang chủ</button><button data-practice>Bàn tập tự do →</button></nav><p class="eyebrow">HỌC CÙNG HLV</p><h1>Từng thế bi. Từng bước tiến.</h1><p>${done}/${LESSONS.length} bài đã đạt · Chọn bất kỳ bài nào để luyện lại.</p>${done===LESSONS.length?'<p class="training-success">Bạn đã hoàn thành thư viện hiện tại! Hãy thử tự đánh không gợi ý hoặc ra bàn tự do.</p>':''}<label>Lọc bài <select id="training-filter"><option value="all">Tất cả</option><option value="review">Cần luyện thêm</option><option value="saved">Đã đánh dấu</option>${[...new Set(LESSONS.map(l=>l.group))].map(g=>`<option>${g}</option>`).join('')}</select></label><div class="lesson-grid"></div><details><summary>Tài liệu tham khảo</summary><p>Các thế bi được thiết kế riêng cho bàn NOIR, dựa trên nhóm kỹ năng trong tài liệu. Thư viện sẽ tiếp tục mở rộng.</p>${SOURCES.map(s=>`<p><a href="${s.url}" target="_blank" rel="noopener noreferrer">${s.title} ↗</a></p>`).join('')}</details>`;
-    library.querySelector('[data-home]').onclick=home;
+    decorateLessonLibrary(library,{home,setup,help});
     library.querySelector('[data-home]').textContent='← Tập luyện';library.querySelector('[data-home]').onclick=open;
     if(!hand){
       const setup=document.createElement('fieldset');setup.className='coach-stance training-hand-setup';
@@ -55,17 +57,18 @@ export function mountTraining({physics,scene,enter,home,practice,resetControls,p
     const grid=library.querySelector('.lesson-grid');
     if(!list.length)grid.textContent='Chưa có bài trong nhóm này.';
     for(const l of list){const p=progress[l.id]||{},button=document.createElement('button');button.className='lesson-card';button.dataset.lesson=l.id;
-      button.innerHTML=`<small>${l.group}</small><strong>${l.title}</strong><span>${p.independent?'✓ Đã tự hoàn thành':p.completed?'✓ Đã đạt có trợ giúp':p.attempts?'Đang luyện':'Chưa học'}${p.saved?' · ★':''}</span><span>${solutions[l.id].length} phương án đầu cơ · ${Number(p.attempts)||0} lượt thử</span>`;
+      button.classList.toggle('is-complete',!!p.completed);button.classList.toggle('is-independent',!!p.independent);
+      button.innerHTML=`${lessonThumbnail(l)}<small>${l.group}</small><strong>${l.title}</strong><span class="lesson-state">${p.independent?'✓ Đã tự hoàn thành':p.completed?'✓ Đã đạt có trợ giúp':p.attempts?'◌ Đang luyện':'○ Chưa học'}${p.saved?' · ★':''}</span><span class="lesson-meta">▤ ${solutions[l.id].length} phương án đầu cơ · ${Number(p.attempts)||0} lượt thử</span>`;
       button.onclick=()=>start(l.id);grid.append(button);
     }
   }
-  function open(){custom.close();resetControls();lesson=null;phase='idle';panel.hidden=true;resultBox.hidden=true;resultBox.replaceChildren();overlay.clear();library.hidden=false;renderHub();}
-  function close(){custom.close();lesson=null;phase='idle';library.hidden=true;panel.hidden=true;resultBox.hidden=true;resultBox.replaceChildren();overlay.clear();}
+  function open(track=true){document.querySelector('#game').classList.remove('lesson-layout');if(track!==false)navigate?.('training');custom.close();resetControls();lesson=null;phase='idle';panel.hidden=true;resultBox.hidden=true;resultBox.replaceChildren();overlay.clear();library.hidden=false;renderHub();}
+  function close(){document.querySelector('#game').classList.remove('lesson-layout');custom.close();lesson=null;phase='idle';library.hidden=true;panel.hidden=true;resultBox.hidden=true;resultBox.replaceChildren();overlay.clear();}
   function start(id){
     if(isBusy())return;
     const next=getLesson(id);if(!next)return;
     if(!hand){pendingLesson=id;library.querySelector('[data-hand]')?.focus();library.querySelector('.training-hand-setup')?.scrollIntoView({block:'center'});return;}
-    enter();lesson=next;variant=0;library.hidden=true;panel.hidden=false;retry();
+    navigate?.('lesson',id);document.querySelector('#game').classList.add('lesson-layout');enter();lesson=next;variant=0;library.hidden=true;panel.hidden=false;retry();
   }
   function retry(independent=false){
     if(!lesson||isBusy())return;
@@ -114,5 +117,5 @@ export function mountTraining({physics,scene,enter,home,practice,resetControls,p
       renderPanel(result.message+(!saved?' Không lưu được tiến độ trên trình duyệt này.':''));
     }
   }
-  return {open,close,start,event,markAssisted(){if(lesson)assisted=true;},get canShoot(){return custom.active?custom.canShoot:!!lesson&&phase==='ready';},get lesson(){return lesson;},get phase(){return phase;}};
+  return {open,close,start,event,restore(route,data){open(false);if(route==='saved')openSaved();else if(route==='lessons')renderLibrary();else if(route==='custom'){library.hidden=true;custom.open(data||null);}else if(route==='lesson'){renderLibrary();start(data);}},markAssisted(){if(lesson)assisted=true;},get canShoot(){return custom.active?custom.canShoot:!!lesson&&phase==='ready';},get lesson(){return lesson;},get phase(){return phase;}};
 }

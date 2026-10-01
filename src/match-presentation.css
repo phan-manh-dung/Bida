@@ -1,0 +1,87 @@
+.match-presentation{display:none}
+.match-navigation{display:flex;align-items:stretch;align-self:stretch;gap:32px}
+.match-navigation button{position:relative;display:flex;align-items:center;gap:10px;background:none;border:0;color:#c7d4e4;font-size:14px;cursor:pointer;padding:0}
+.match-navigation button>span{font-size:23px;color:#9ab0c7}
+.match-navigation button>span{display:flex;align-items:center}
+.match-navigation button svg{width:22px;height:22px}
+.match-navigation .active,.match-navigation .active>span{color:#e9c66f}
+.match-navigation .active::after{content:"";position:absolute;bottom:0;left:0;right:0;height:2px;background:#f1cf75;box-shadow:0 0 13px #eec86a88}
+.match-logo-ball{font-size:.9em;letter-spacing:1px;color:#f6e6b9}
+#game.match-layout{background:linear-gradient(#02091677,#020916bb),url('/images/noir-club-hero.png') center/cover no-repeat}
+#ai-score{--clock-color:#ff6375}
+@media(min-width:1001px) {
+  #game.match-layout:not(.phone-play) .match-presentation{display:block}
+  .match-topbar{position:absolute;inset:0 0 auto;height:76px;display:flex;align-items:center;gap:60px;padding:0 max(30px,6vw);border-bottom:1px solid #45607966;background:#020a16db;z-index:3}
+  .match-brand{background:none;border:0;color:#f0f2f6;font-size:38px;font-weight:650;letter-spacing:4px;line-height:1;cursor:pointer}
+  .match-brand small{display:block;font-size:8px;letter-spacing:3px;margin-top:7px;color:#b8c5d2}
+  .match-location{font-size:14px;color:#edd28b;display:flex;align-items:center;gap:18px}
+  .match-location span{font-size:10px;letter-spacing:2px;color:#90a6ba;border-right:1px solid #6d849644;padding-right:18px}
+  .match-top-actions{margin-left:auto;display:flex;gap:12px;align-items:center}
+  .match-top-actions button{min-height:42px;padding:10px 15px;border:1px solid #3d536a66;border-radius:24px;background:#0e1a2b99;color:#cbd7e4;cursor:pointer;font-size:13px}
+  .match-top-actions button:hover{border-color:#e1bd65;color:#ffe4a0}
+  #game.match-layout:not(.phone-play) .menu-toggle,#game.match-layout:not(.phone-play) .settings-toggle{display:none}
+  #game.match-layout:not(.phone-play) .match-header{top:90px;width:min(1030px,calc(100% - 450px));height:94px;padding:14px 20px;box-sizing:border-box;border:1px solid #32638880;border-top:0;border-radius:0 0 24px 24px;background:linear-gradient(100deg,#03101ee6,#071321b8);grid-template-columns:minmax(0,1fr) 100px minmax(0,1fr);gap:20px}
+  #game.match-layout:not(.phone-play) .match-score-line,#game.match-layout:not(.phone-play) .player-score{font-size:32px;color:#f3e7ce;text-shadow:0 0 16px #eac57722}
+  #game.match-layout:not(.phone-play) .score-target{color:#aebccd;font-size:11px;letter-spacing:1.5px}
+  #game.match-layout:not(.phone-play) .player-info .score-name{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #game.match-layout:not(.phone-play) .player-balls{gap:5px;--capture-size:18px}
+  #game.match-layout:not(.phone-play) .capture-slot{background:#17132b77;border-color:#8871bb}
+  #game.match-layout:not(.phone-play) .capture-slot.filled{background:radial-gradient(circle at 30% 20%,#ffffff65,transparent 55%),var(--ball)}
+  #game.match-layout:not(.phone-play) #scene{inset:194px 174px 62px 215px}
+  #game.match-layout:not(.phone-play) #scene canvas{filter:drop-shadow(0 0 7px #137cff66)}
+  .match-info-panel{position:absolute;left:22px;top:50%;transform:translateY(-35%);width:180px;color:#c8d5e3}
+  .match-info-card,.match-tip{border:1px solid #34577388;border-radius:18px;padding:17px;background:linear-gradient(120deg,#031021e8,#020a16d9);box-shadow:0 10px 25px #0004}
+  .match-info-label{font-size:9px;letter-spacing:1.5px;color:#7e9bb4;margin:0 0 12px}
+  .match-info-row{display:flex;align-items:center;gap:12px;padding:18px 0;border-top:1px solid #536d8e22}
+  .match-info-row>span{font-size:24px;color:#a0d4ff}
+  .match-info-row strong{display:block;font-size:12px;font-weight:550}
+  .match-info-row small{display:block;font-size:11px;color:#8fa9be;margin-top:8px}
+  .match-tip{margin-top:20px;border-color:#c5a35a66}
+  .match-tip strong{font-size:12px;color:#dfbe71}
+  .match-tip p{font-size:11px;line-height:1.8;color:#9aabba;margin:10px 0 0}
+  #game.match-layout:not(.phone-play) #cue-control{top:220px;bottom:100px;right:24px;height:auto;width:54px;transform:none;border-color:#376992}
+  #game.match-layout:not(.phone-play) #pull-cue{height:100%;min-height:0;background:linear-gradient(90deg,#05111ed9,#101f2bd9);border-color:#416885;border-radius:22px}
+  #game.match-layout:not(.phone-play) .spin-control{right:66px;top:0;width:70px;height:70px}
+  #game.match-layout:not(.phone-play) .match-sidebar{top:190px;width:calc(100% - 430px);z-index:4}
+  #game.match-layout:not(.phone-play) .match-action{border:1px solid #7194ac66;background:#112d41;color:#eaf3fb;border-radius:9px;min-height:36px}
+  #game.match-layout:not(.phone-play) .next-rack{top:98px;right:24px}
+  #game.match-layout:not(.phone-play) .foul-popup{top:200px}
+  .match-bottom-note{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);border:1px solid #36567866;border-radius:24px;background:#020b17bd;padding:10px 25px;color:#d9b561;font-size:13px;white-space:nowrap}
+  .match-bottom-note span{color:#9aabba;font-size:12px;margin-left:10px}
+  @media(max-height:760px) {
+    .match-topbar{height:60px}
+    .match-brand{font-size:30px}
+    #game.match-layout:not(.phone-play) .match-header{top:66px;height:78px}
+    #game.match-layout:not(.phone-play) #scene{top:157px;bottom:35px;left:180px;right:150px}
+    .match-info-panel{width:150px;left:16px}
+    .match-info-card,.match-tip{padding:12px}
+    .match-info-row{padding:12px 0}
+    .match-tip{margin-top:12px}
+    .match-bottom-note{bottom:7px;padding:5px 18px}
+    #game.match-layout:not(.phone-play) #cue-control{top:174px;bottom:60px;right:16px;width:46px}
+    #game.match-layout:not(.phone-play) .spin-control{width:58px;height:58px;right:57px}
+    #game.match-layout:not(.phone-play) .match-sidebar{top:146px}
+    #game.match-layout:not(.phone-play) .next-rack{top:82px}
+    #game.match-layout:not(.phone-play) .foul-popup{top:158px}
+  }
+}
+@media(min-width:1001px){
+ #game.match-layout:not(.phone-play) #cue-control{right:60px;top:310px;bottom:85px}
+ #game.match-layout:not(.phone-play) .spin-control{right:-8px;top:-92px;width:70px;height:70px}
+ #game.match-layout:not(.phone-play) #scene{bottom:25px}
+ @media(max-height:760px){
+  #game.match-layout:not(.phone-play) #cue-control{right:52px;top:252px;bottom:42px}
+  #game.match-layout:not(.phone-play) .spin-control{right:-6px;top:-76px;width:58px;height:58px}
+  .match-topbar{gap:30px;padding:0 28px}
+  .match-navigation{gap:24px}
+ }
+ @media(max-width:1250px){
+  .match-topbar{gap:25px;padding:0 25px}
+  .match-navigation{gap:20px}
+  .match-navigation button{font-size:12px;gap:7px}
+  .match-top-actions{gap:6px}
+  .match-top-actions button{padding:8px 10px}
+ }
+}
+#game.match-layout.phone-play #cue-control{top:98px;bottom:12px}
+#game.match-layout.phone-play .spin-control{top:-48px;right:1px}

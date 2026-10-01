@@ -1,0 +1,13 @@
+/* Mouse strokes happen on the table; only the spin ball remains at the side. */
+#game:not(.phone-play) #pull-cue,#game:not(.phone-play) #cue-instructions{display:none}
+#game:not(.phone-play) #cue-control{top:112px;bottom:auto;right:24px;width:68px;height:68px;transform:none}
+#game:not(.phone-play) #cue-control .spin-control{top:0;right:0;width:68px;height:68px}
+#game.match-layout:not(.phone-play) #cue-control{top:106px!important;bottom:auto!important;right:24px!important;height:68px!important;transform:none!important}
+#game.match-layout:not(.phone-play) #cue-control .spin-control{top:0!important;right:0!important}
+.match-info-label{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.match-info-nine{display:inline-grid;place-items:center;flex:none;width:32px;height:32px;border-radius:50%;background:linear-gradient(#fff4c6 0 22%,#e5af18 23% 76%,#fff4c6 77%);box-shadow:inset -4px -4px 7px #0007,0 2px 5px #0005}
+.match-info-nine b{display:grid;place-items:center;width:17px;height:17px;border-radius:50%;background:#fff9e8;color:#242021;font:bold 12px Arial;letter-spacing:0}
+#game.phone-play #pull-cue .cue-stick,#game.phone-play #pull-cue .cue-ruler{display:none}
+#game.phone-play #pull-cue{background:#061725dd;border:1px solid #3b6887;border-radius:16px}
+#game.phone-play #pull-cue .force-track{display:block;left:17px;right:auto;width:6px;opacity:1}
+@media(min-width:1001px){#game:is(.lesson-layout,.custom-layout,.free-layout):not(.phone-play) #scene{right:100px}}

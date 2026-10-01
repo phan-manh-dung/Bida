@@ -12,18 +12,18 @@ export function mountContactAid(scene){
   const path=line(2,'#4fe5ff',true),out=line(5,'#ffd379');
   const dot=new THREE.Mesh(new THREE.SphereGeometry(.025,16,12),new THREE.MeshBasicMaterial({color:'#ff5757',depthTest:false}));dot.name='live-contact-point';dot.renderOrder=20;group.add(dot);
   const ghost=new THREE.Group();ghost.name='live-contact-ghost';group.add(ghost);
-  for(let axis=0;axis<3;axis++){
-    const ring=line(65,'#ffffff',true);group.remove(ring);ghost.add(ring);
-    points(ring,Array.from({length:65},(_,i)=>{const a=i/64*Math.PI*2,c=RADIUS*Math.cos(a),s=RADIUS*Math.sin(a);return axis===0?[c,0,s]:axis===1?[c,s,0]:[0,c,s];}));
-  }
+  const ring=new THREE.Mesh(new THREE.RingGeometry(RADIUS*.94,RADIUS*1.06,96),new THREE.MeshBasicMaterial({color:'#fff9e8',depthTest:false,depthWrite:false,side:THREE.DoubleSide}));
+  ring.renderOrder=16;ghost.add(ring);
   return {update(){
     const active=scene.contactAidEnabled&&scene.view==='cue'&&scene.physics.canShoot&&!scene.striking&&scene.showCue!==false&&scene.canInteract?.()!==false;
     group.visible=!!active;if(!active)return '';
     const cue=scene.physics.cueBall,hit=scene.physics.aimTarget(scene.angle),y=CLOTH_Y+RADIUS;
-    points(path,[[cue.x,y,cue.z],[hit.x,y,hit.z]]);
+    const aimLength=Math.hypot(hit.x-cue.x,hit.z-cue.z),end=Math.max(0,aimLength-RADIUS*1.08);
+    points(path,[[cue.x,y,cue.z],[cue.x+Math.cos(scene.angle)*end,y,cue.z+Math.sin(scene.angle)*end]]);
     const target=hit.target;dot.visible=ghost.visible=out.visible=!!target;
     if(!target)return 'Hướng cơ hiện tại chưa chạm bi nào trước băng. Chỉnh hướng ngắm để thấy điểm chạm.';
     ghost.position.set(hit.x,y,hit.z);
+    ghost.quaternion.copy(scene.camera.quaternion);
     const dx=target.x-hit.x,dz=target.z-hit.z,d=Math.hypot(dx,dz),nx=dx/d,nz=dz/d;
     dot.position.set(target.x-nx*RADIUS,y,target.z-nz*RADIUS);
     // Only show the initial object-ball direction, stopping before a rail.

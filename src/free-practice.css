@@ -1,0 +1,53 @@
+#free-practice-panel,#free-practice-toggle{display:none}
+#game.free-layout{background:linear-gradient(90deg,#010a1599,#010a1544),url('/images/noir-club-hero.png') center/cover}
+#game.free-layout #free-practice-panel{display:block;position:absolute;left:28px;top:108px;bottom:30px;width:390px;overflow:auto;z-index:6;padding:24px;border:1px solid #365a77;border-radius:24px;background:linear-gradient(130deg,#071b2aed,#020b15ed);color:#e8f1fb;scrollbar-width:thin;scrollbar-color:#3b6380 transparent}
+#free-practice-panel button{border:1px solid #314b65;border-radius:12px;background:#091b2b;color:#d3e2f2;padding:10px 14px;min-height:40px;cursor:pointer;font-size:12px}
+#free-practice-panel [data-free-back]{min-height:34px;padding:7px 12px}
+#free-practice-panel .free-eyebrow{font-size:10px;letter-spacing:2px;color:#8c9db1;margin:16px 0 8px}
+#free-practice-panel h2{font-size:30px;font-weight:650;letter-spacing:-.8px;line-height:1.2;margin:0 0 12px}
+#free-practice-panel h2 span{color:#efc467}
+#free-practice-panel .free-description{font-size:13px;line-height:1.6;color:#afbed0;margin:0 0 24px}
+#free-practice-panel .free-section{padding:16px 12px;margin:12px 0;border:1px solid #29435d55;border-radius:15px;background:linear-gradient(120deg,#0c2134aa,#05111e55)}
+#free-practice-panel .free-section label{display:flex;align-items:center;gap:10px;font-size:14px;margin-bottom:12px}
+#free-practice-panel .free-section p{margin:0 0 12px;font-size:14px}
+#free-layout{width:100%;min-width:0;background:#071725;color:#eef4fa;border:1px solid #34516c;border-radius:10px;padding:12px;font-size:13px}
+#free-practice-panel .free-position{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+#free-practice-panel .free-position button{padding:9px 5px;font-size:11px}
+#free-practice-panel [aria-pressed=true]{border-color:#e3bf69;color:#ffe09b;background:#8b693529;box-shadow:0 0 14px #e3b65022}
+#free-practice-panel .free-switch-row{display:flex;align-items:center;gap:12px;padding:18px 12px;margin:12px 0;background:linear-gradient(100deg,#122539aa,#05131f55);border:1px solid #28445d44;border-radius:16px;cursor:pointer}
+#free-practice-panel .free-switch-row>span{flex:1;display:flex;flex-direction:column;gap:7px}
+#free-practice-panel .free-switch-row strong{font-size:13px;font-weight:550}
+#free-practice-panel .free-switch-row small{font-size:11px;color:#8195ab}
+#free-practice-panel .free-switch-row>svg{width:26px;color:#c8dbef;flex-shrink:0}
+#free-practice-panel .switch:checked{background:#e8bd63;box-shadow:0 0 16px #e8bd6333}
+#free-practice-panel .free-status{font-size:11px;line-height:1.5;color:#b9cbe0;min-height:32px;margin:12px 0}
+#free-practice-panel .free-actions{display:grid;grid-template-columns:1fr 1.6fr;gap:12px;margin-top:16px}
+#free-practice-panel .free-actions button{display:flex;justify-content:center;align-items:center;gap:8px;min-height:52px;font-size:13px}
+#free-practice-panel .free-actions svg{width:20px}
+#free-practice-panel [data-free-start]{background:linear-gradient(110deg,#ffe4a3,#e8b653);border-color:#ffe1a1;color:#1d180c;font-weight:650;box-shadow:0 0 20px #d9b35a30}
+#game.free-layout.free-hide-power .force-track,#game.free-layout.free-hide-power #power-value{visibility:hidden}
+#free-practice-panel button:focus-visible,#free-practice-panel select:focus-visible,#free-practice-panel input:focus-visible{outline:2px solid #eecb7a;outline-offset:3px}
+@media(min-width:1001px){
+ #game.free-layout:not(.phone-play) .match-presentation{display:block}
+ #game.free-layout .match-info-panel{display:none}
+ #game.free-layout:not(.phone-play) .menu-toggle,#game.free-layout:not(.phone-play) .settings-toggle{display:none}
+ #game.free-layout:not(.phone-play) #scene{inset:100px 150px 30px 442px}
+ #game.free-layout:not(.phone-play) #cue-control{right:48px;top:300px;bottom:105px;height:auto;transform:none;width:54px}
+ #game.free-layout:not(.phone-play) #pull-cue{height:100%;min-height:0;background:#061321bb;border-color:#345975}
+ #game.free-layout:not(.phone-play) .spin-control{right:-6px;top:-86px;width:66px;height:66px}
+ @media(max-height:950px){
+  #game.free-layout #free-practice-panel{top:76px;bottom:18px;left:20px;width:345px;padding:16px}
+  #free-practice-panel .free-description{margin-bottom:12px}
+  #free-practice-panel h2{font-size:27px}
+  #free-practice-panel .free-section{padding:11px;margin:8px 0}
+  #free-practice-panel .free-switch-row{padding:12px;margin:8px 0}
+  #free-practice-panel .free-status{min-height:18px;margin:8px 0}
+  #free-practice-panel .free-actions{margin-top:10px}
+  #game.free-layout:not(.phone-play) #scene{left:382px;top:75px;right:130px;bottom:18px}
+  #game.free-layout:not(.phone-play) #cue-control{right:38px;top:230px;bottom:70px}
+ }
+}
+@media(max-width:1000px){#game.free-layout #scene{left:330px;right:90px}#game.free-layout #free-practice-panel{width:300px;left:12px;top:76px;padding:15px}}
+#game.free-layout.phone-play #free-practice-panel{display:none;left:10px;top:40px;bottom:8px;width:min(340px,calc(100% - 80px));padding:14px;background:#061725fa}
+#game.free-layout.phone-play.free-panel-open #free-practice-panel{display:block}
+#game.free-layout.phone-play #free-practice-toggle{display:block;position:absolute;left:150px;top:3px;z-index:16;min-height:30px;padding:5px 12px;border:1px solid #456579;border-radius:8px;background:#213c4b;color:#fff;font-size:12px}

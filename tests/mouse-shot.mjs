@@ -1,0 +1,37 @@
+import {chromium} from 'playwright';
+import assert from 'node:assert/strict';
+const browser=await chromium.launch({channel:'chrome',headless:true});
+try{
+ const page=await browser.newPage({viewport:{width:1440,height:900}}),errors=[];
+ page.on('pageerror',e=>errors.push(e.message));
+ await page.goto(process.env.BASE_URL||'http://127.0.0.1:5173/');
+ await page.evaluate(()=>window.__noir.startPractice());
+ await page.locator('[data-free-start]').click();
+ const position=await page.evaluate(()=>window.__noir.scene.project(1,1));
+ const before=await page.evaluate(()=>window.__noir.scene.angle);
+ await page.mouse.move(position.x,position.y);await page.waitForTimeout(150);
+ assert.notEqual(await page.evaluate(()=>window.__noir.scene.angle),before,'Hover aims without a click');
+ await page.mouse.down();await page.mouse.up();await page.waitForTimeout(100);
+ assert.equal(await page.evaluate(()=>window.__noir.physics.shots),0,'A click alone never shoots');
+ const stroke=await page.evaluate(()=>{const s=window.__noir.scene,b=s.physics.cueBall,a=s.project(b.x,b.z),c=s.project(b.x-Math.cos(s.angle),b.z-Math.sin(s.angle)),n=Math.hypot(c.x-a.x,c.y-a.y);return {dx:(c.x-a.x)/n,dy:(c.y-a.y)/n};});
+ await page.mouse.down();await page.mouse.move(position.x+stroke.dx*70,position.y+stroke.dy*70,{steps:5});
+ assert.ok(await page.evaluate(()=>window.__noir.scene.power>.15),'Dragging backwards pulls the cue');
+ await page.keyboard.press('Escape');await page.mouse.up();
+ assert.equal(await page.evaluate(()=>window.__noir.physics.shots),0,'Escape cancels a stroke');
+ await page.mouse.move(position.x,position.y);await page.mouse.down();
+ await page.mouse.move(position.x+stroke.dx*70,position.y+stroke.dy*70,{steps:5});await page.mouse.up();
+ await page.waitForFunction(()=>window.__noir.physics.shots===1);
+ await page.waitForFunction(()=>!window.__noir.physics.moving,undefined,{timeout:45000});
+ await page.evaluate(()=>window.__noir.scene.setView('cue'));
+ const area=await page.locator('#scene canvas').boundingBox();
+ const x=area.x+area.width*.55,y=area.y+area.height*.5;
+ await page.mouse.move(x,y);const angle=await page.evaluate(()=>window.__noir.scene.angle);
+ await page.mouse.move(x+30,y,{steps:5});
+ assert.ok(Math.abs(await page.evaluate(()=>window.__noir.scene.angle)-angle)>.05,'First-person hover rotates aim smoothly');
+ const locked=await page.evaluate(()=>window.__noir.scene.angle);
+ await page.mouse.down();await page.mouse.move(x+30,y+90,{steps:5});
+ assert.equal(await page.evaluate(()=>window.__noir.scene.angle),locked,'Pulling locks the shot direction');
+ assert.ok(await page.evaluate(()=>window.__noir.scene.power>.2));
+ await page.mouse.up();await page.waitForFunction(()=>window.__noir.physics.shots===2);
+ assert.deepEqual(errors,[]);console.log('PASS mouse aim, pull, release, cancel and first-person direction lock');
+}finally{await browser.close();}

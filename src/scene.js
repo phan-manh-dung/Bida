@@ -50,7 +50,7 @@ export class PoolScene {
     this.scene = new THREE.Scene(); this.scene.background = new THREE.Color('#161b21');
     this.scene.fog = new THREE.FogExp2('#161b21', 0.024);
     this.camera = new THREE.PerspectiveCamera(36, 1, 0.06, 85);
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
     this.renderer.setPixelRatio(1);
     this.renderer.shadowMap.enabled = true; this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.shadowMap.autoUpdate = false;
@@ -86,6 +86,7 @@ export class PoolScene {
     this.contactAid=mountContactAid(this);
     this.buildRoom();
     const materials = buildTournamentTable(this.scene, this.renderer);
+    this.clubHardware=materials.hardware;this.clubRails=materials.rails;
     this.feltMaterial = materials.felt; this.cushionMaterial = materials.cushion;
     this.buildBalls(); this.buildCue(); this.buildGuide(); this.bindInput();
     this.resize(); this.setView('orbit');
@@ -104,7 +105,7 @@ export class PoolScene {
     const rim = new THREE.DirectionalLight('#d5e8ff', 1.8); rim.position.set(2, 6, -5); this.scene.add(rim);
     // Quiet studio floor: no labels, rugs or decorative objects around the table.
     const floor = new THREE.Mesh(new THREE.PlaneGeometry(80, 80), new THREE.MeshLambertMaterial({ color: '#35404c' }));
-    floor.rotation.x = -Math.PI / 2; floor.position.y = -1.53; floor.receiveShadow = true; this.scene.add(floor);
+    floor.rotation.x = -Math.PI / 2; floor.position.y = -1.53; floor.receiveShadow = true; this.scene.add(floor);this.studioFloor=floor;
   }
   buildBalls() {
     const geometry = new THREE.SphereGeometry(RADIUS, 48, 32);
@@ -140,7 +141,7 @@ export class PoolScene {
     });this.scene.add(this.pocketLabels);
     this.guide = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]), new THREE.LineDashedMaterial({ color: '#f1f4eb', dashSize: 0.075, gapSize: 0.085, transparent: true, opacity: 0.4 }));
     this.scene.add(this.guide);
-    this.ghost = new THREE.Mesh(new THREE.RingGeometry(RADIUS * 0.98, RADIUS * 1.025, 80), new THREE.MeshBasicMaterial({ color: '#f5f4e7', transparent: true, opacity: 0.45, side: THREE.DoubleSide }));
+    this.ghost = new THREE.Mesh(new THREE.RingGeometry(RADIUS * 0.94, RADIUS * 1.06, 96), new THREE.MeshBasicMaterial({ color: '#fff9e8', transparent: true, opacity: 0.85, side: THREE.DoubleSide,depthWrite:false }));
     this.ghost.rotation.x = -Math.PI / 2; this.scene.add(this.ghost);
   }
   bindInput() {
@@ -191,18 +192,25 @@ export class PoolScene {
     element.addEventListener('lostpointercapture', () => this.cancelPlacement());
     window.addEventListener('blur', () => this.cancelPlacement());
     window.addEventListener('keydown', event => { if (event.code === 'Escape') this.cancelPlacement(); });
-    element.addEventListener('pointerdown', e => { if (e.isPrimary && e.button === 0) down = { x: e.clientX, y: e.clientY }; });
-    element.addEventListener('pointercancel', () => { down = null; });
-    element.addEventListener('pointerup', e => {
-      if (e.pointerType==='touch'||!down || this.cameraGesture || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 6 || !this.physics.canShoot || this.inputLocked || this.canInteract?.()===false) { down = null; return; }
-      down = null;
-      const rect = element.getBoundingClientRect();
-      const p=localPointer(element,e),point = new THREE.Vector2(p.u*2-1,1-p.v*2);
-      const ray = new THREE.Raycaster(); ray.setFromCamera(point, this.camera);
-      const hit = ray.ray.intersectPlane(new THREE.Plane(UP, -Y), new THREE.Vector3());
-      if (!hit || Math.abs(hit.x) > HALF_X + 0.2 || Math.abs(hit.z) > HALF_Z + 0.2) return;
-      this.angle = Math.atan2(hit.z - this.physics.cueBall.z, hit.x - this.physics.cueBall.x);
-      this.onAim(this.angle);
+    let previousMouse=null;
+    this.resetMouseAim=()=>{previousMouse=null;};
+    element.addEventListener('pointerleave',()=>{previousMouse=null;});
+    element.addEventListener('pointermove', e => {
+      if(e.pointerType!=='mouse')return;
+      const previous=previousMouse;previousMouse={x:e.clientX,y:e.clientY};
+      if(e.buttons||this.cameraGesture||this.physics.moving||!this.physics.canShoot||this.inputLocked||this.placingCue||this.canInteract?.()===false||document.querySelector('dialog[open]'))return;
+      if(this.view==='cue'){
+        // Relative horizontal motion avoids aiming at a ray that moves with the camera.
+        if(!previous)return;
+        this.angle+=(e.clientX-previous.x)*.003*(e.shiftKey?.2:1);
+      }else{
+        const hit=tableHit(e);
+        if(!hit||Math.abs(hit.x)>HALF_X+.2||Math.abs(hit.z)>HALF_Z+.2)return;
+        const b=this.physics.cueBall;
+        if(Math.hypot(hit.x-b.x,hit.z-b.z)<RADIUS*2)return;
+        this.angle=Math.atan2(hit.z-b.z,hit.x-b.x);
+      }
+      this.guideKey=null;this.onAim(this.angle);
     });
   }
   setCloth(color) {
@@ -254,9 +262,20 @@ export class PoolScene {
     if (this.lastSize && (width !== this.lastSize[0] || height !== this.lastSize[1])) this.setView(this.view,true);
     this.lastSize = [width, height];
   }
+  setClubPresentation(enabled) {
+    this.scene.background=enabled?null:new THREE.Color('#161b21');
+    this.studioFloor.visible=!enabled;
+    this.renderer.setClearColor('#161b21',enabled?0:1);
+    this.clubHardware.color.set(enabled?'#8999ad':'#7c6335');
+    this.clubHardware.roughness=enabled?.28:.5;
+    this.clubRails.color.set(enabled?'#708499':'#ffffff');
+  }
   playArea() {
     const width = this.container.clientWidth, height = this.container.clientHeight;
     if(document.querySelector('#game')?.classList.contains('phone-play'))return {width,height,margin:0};
+    if(document.querySelector('#game')?.classList.contains('match-layout')&&innerWidth>1000)return {width,height,margin:0};
+    if(document.querySelector('#game')?.matches('.custom-layout,.lesson-layout')&&innerWidth>1000)return {width,height,margin:0};
+    if(document.querySelector('#game')?.classList.contains('free-layout')&&innerWidth>1000)return {width,height,margin:0};
     const gutter = width <= 700 || height <= 500 ? 74 : 100;
     const margin = width <= 700 && height > 500 ? 40 : 0;
     return { width: Math.max(150, width - gutter), height: height - 2 * margin, margin };
@@ -320,12 +339,15 @@ export class PoolScene {
       if (key !== this.guideKey) { this.guideKey = key; this.guideTarget = this.physics.aimTarget(this.angle); }
       const target = this.guideTarget;
       const positions = this.guide.geometry.attributes.position;
-      positions.setXYZ(0, b.x, Y + RADIUS, b.z); positions.setXYZ(1, target.x, Y + RADIUS, target.z);
+      const gap=this.ghost.visible?RADIUS*1.08:0;
+      const length=Math.hypot(target.x-b.x,target.z-b.z),end=Math.max(0,length-gap);
+      positions.setXYZ(0, b.x, Y + RADIUS, b.z); positions.setXYZ(1, b.x+Math.cos(this.angle)*end, Y + RADIUS, b.z+Math.sin(this.angle)*end);
       positions.needsUpdate = true; this.guide.geometry.computeBoundingSphere(); this.guide.computeLineDistances();
-      this.ghost.position.set(target.x, Y + 0.002, target.z);
+      this.ghost.position.set(target.x, this.view==='cue'?Y+RADIUS:Y+0.004, target.z);
+      if(this.view==='cue')this.ghost.quaternion.copy(this.camera.quaternion);else this.ghost.rotation.set(-Math.PI/2,0,0);
     }
 
-    this.contactAidText=this.contactAid.update();this.cueCamera.update();this.controls.update();this.cueCamera.constrain(); this.syncBalls(0); this.renderer.render(this.scene, this.camera);
+    this.contactAidText=this.contactAid.update();this.cueCamera.update(dt);this.controls.update();this.cueCamera.constrain(); this.syncBalls(0); this.renderer.render(this.scene, this.camera);
     this.frame = requestAnimationFrame(this.tick);
   }
   project(x, z, y = Y) {

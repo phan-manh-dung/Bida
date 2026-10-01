@@ -15,7 +15,7 @@ export class PoolMatch {
   }
   get canHumanShoot(){return !this.disposed&&!this.foulNotice&&(this.phase==='lag-ready'||this.phase==='playing'&&this.turn===0)&&!this.physics.moving;}
   get targets(){return legalTargets(this.config.game,this.groups[this.turn],this.physics.balls.filter(b=>b.id&&!b.pocketed).map(b=>b.id),this.breaking);}
-  notify(){if(this.disposed)return;this.syncTurnClock();this.onChange(this);this.scheduleAI();}
+  notify(){if(this.disposed)return;this.scene.cueCamera?.setShooter(`${this.rackNumber}:${this.phase.startsWith('lag')?'lag':'rack'}:${this.turn}`,this.turn===0);this.syncTurnClock();this.onChange(this);this.scheduleAI();}
   stopTurnClock(){clearTimeout(this.turnTimer);this.turnTimer=null;this.turnDeadline=null;this.clockKey=null;}
   syncTurnClock(){
     const ready=!this.foulNotice&&!this.physics.moving&&(this.phase==='lag-ready'||this.phase==='playing');
@@ -185,9 +185,10 @@ export class PoolMatch {
       }
       const shot=chooseShot(this.physics,this);if(!shot)return;
       this.pendingCall=shot;this.scene.angle=shot.angle;this.scene.power=shot.power;this.scene.guideKey=null;
+      this.scene.cueCamera?.followAim();
       this.message=`${this.names[1]} ngắm bi ${shot.ball}${!this.breaking&&this.config.game==='8'?`, lỗ ${shot.pocket+1}`:''}…`;this.onChange(this);
-      this.timer=setTimeout(()=>{this.timer=null;if(this.disposed)return;this.scene.strike(shot.power,()=>{if(this.disposed)return;if(this.turnDeadline&&performance.now()>=this.turnDeadline){this.expireTurn();return;}this.physics.shoot(shot.angle,shot.power);});this.scene.power=0;},600);
+      this.timer=setTimeout(()=>{this.timer=null;if(this.disposed)return;this.scene.strike(shot.power,()=>{if(this.disposed)return;if(this.turnDeadline&&performance.now()>=this.turnDeadline){this.expireTurn();return;}this.physics.shoot(shot.angle,shot.power);});this.scene.power=0;},this.scene.view==='cue'?1100:600);
     },750);
   }
-  dispose(){this.disposed=true;this.stopTurnClock();clearTimeout(this.noticeTimer);clearTimeout(this.timer);this.timer=null;this.scene.striking=null;this.scene.power=0;}
+  dispose(){this.scene.cueCamera?.setShooter(null,true);this.disposed=true;this.stopTurnClock();clearTimeout(this.noticeTimer);clearTimeout(this.timer);this.timer=null;this.scene.striking=null;this.scene.power=0;}
 }

@@ -4,7 +4,7 @@ const browser=await chromium.launch({channel:'chrome',headless:true});
 try{
  const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];
  page.on('pageerror',e=>errors.push(e.message));
- await page.goto('http://127.0.0.1:5173/',{waitUntil:'networkidle'});
+ await page.goto(process.env.BASE_URL||'http://127.0.0.1:5173/',{waitUntil:'networkidle'});
  assert.equal(await page.locator('#lobby #training-start').count(),0);
  await page.locator('#practice-start').click();
  assert.equal(await page.locator('#training-start').isVisible(),true);

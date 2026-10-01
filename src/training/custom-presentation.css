@@ -1,0 +1,49 @@
+#game:is(.custom-layout,.lesson-layout){background:linear-gradient(90deg,#010b16aa,#010b1644 70%,#010b1688),url('/images/noir-club-hero.png') center/cover no-repeat}
+#game:is(.custom-layout,.lesson-layout) #training-panel{background:linear-gradient(135deg,#061a2aee,#020b14ed);border:1px solid #4297db;border-radius:23px;box-shadow:0 0 16px #008cff30,inset 0 1px #76c8ff33;color:#eaf1f8;padding:22px;font-size:13px;scrollbar-color:#326289 transparent}
+#game:is(.custom-layout,.lesson-layout) #training-panel .custom-title{font-family:'Segoe UI',Arial,sans-serif;font-size:30px;font-weight:650;letter-spacing:-.8px;margin:18px 0 22px;line-height:1.2}
+#game:is(.custom-layout,.lesson-layout) .custom-title span{color:#efc66b}
+#game:is(.custom-layout,.lesson-layout) #training-panel [data-back]{padding:8px 13px;border:1px solid #416680;border-radius:10px;background:linear-gradient(#1b3e55,#112937);font-size:12px}
+#game:is(.custom-layout,.lesson-layout) #training-panel .coach-stance{border:0;border-bottom:1px solid #41678055;border-radius:0;padding:0 0 15px;margin:0 0 16px;color:#e5edf6}
+#game:is(.custom-layout,.lesson-layout) #training-panel .coach-stance legend{padding:0;font-size:14px;margin-bottom:8px}
+#game:is(.custom-layout,.lesson-layout) #training-panel .coach-stance button{min-width:94px;min-height:42px;font-size:12px;margin:0 8px 0 0;border-radius:11px;background:#0c2031;border-color:#3b5a71}
+#game:is(.custom-layout,.lesson-layout) #training-panel .coach-stance button[aria-pressed=true]{background:linear-gradient(120deg,#ffe298,#edc262)!important;color:#211a0d!important;border-color:#ffe3a0;box-shadow:0 0 18px #edbd5a33}
+#game:is(.custom-layout,.lesson-layout) #training-panel>p{line-height:1.6;color:#c4d4e1;margin:12px 0}
+#game:is(.custom-layout,.lesson-layout) #training-panel>label{display:grid;grid-template-columns:100px minmax(0,1fr);align-items:center;gap:10px;margin:16px 0 10px;color:#bdcddd;font-size:13px}
+#game:is(.custom-layout,.lesson-layout) #training-panel select{min-width:0;width:100%;padding:11px 12px;min-height:43px;border:1px solid #2d5571;border-radius:11px;background:#031321;color:#eef5ff;font:inherit;text-overflow:ellipsis}
+#game:is(.custom-layout,.lesson-layout) #training-panel button{border-color:#365f7a;background:#091d2b;border-radius:11px;font-size:12px;min-height:39px;padding:9px 13px}
+#game:is(.custom-layout,.lesson-layout) #training-panel [data-add]{border-color:#e0bd65;color:#f6d37c;background:linear-gradient(110deg,#6d552c33,#0b1925);box-shadow:0 0 12px #e6b84822}
+#game:is(.custom-layout,.lesson-layout) #training-panel [data-remove]{color:#a8bacb}
+#game:is(.custom-layout,.lesson-layout) #training-panel [data-ready]{display:flex;align-items:center;justify-content:center;gap:13px;width:100%;min-height:49px;margin:17px 0 13px;border-radius:30px;border:1px solid #ffe8b0;background:linear-gradient(115deg,#f9db8b,#e9bd5e);color:#211807;font-size:16px;font-weight:650;box-shadow:0 0 22px #e8bc5438}
+#game:is(.custom-layout,.lesson-layout) #training-panel [data-ready]>span:first-child{font-size:23px;line-height:1}
+#game:is(.custom-layout,.lesson-layout) #training-panel .training-note{font-size:12px;color:#9db9ce;padding-left:25px;position:relative}
+#game:is(.custom-layout,.lesson-layout) #training-panel .training-note::before{content:'ⓘ';position:absolute;left:0;color:#daedff;font-size:16px}
+#game:is(.custom-layout,.lesson-layout) #training-panel .save-layout{border:1px solid #315a75;border-radius:13px;background:#03121d99;padding:0 14px;margin:12px 0}
+#game:is(.custom-layout,.lesson-layout) #training-panel .save-layout summary{margin:0;padding:16px 0;font-size:17px;color:#eef5fa}
+#game:is(.custom-layout,.lesson-layout) #training-panel .save-layout input,#game:is(.custom-layout,.lesson-layout) #training-panel .save-layout textarea{background:#071a29;border-color:#35566d;color:#e9f3fa}
+#game:is(.custom-layout,.lesson-layout) #training-panel [data-my-layouts]{display:block;text-align:left;width:100%;padding:11px 16px;background:#07203388;border-color:#2d5069}
+#game:is(.custom-layout,.lesson-layout) #training-panel [data-my-layouts]::after{content:'›';float:right;font-size:19px;line-height:1}
+#game:is(.custom-layout,.lesson-layout) #training-panel [data-custom-status]:empty{display:none}
+#game:is(.custom-layout,.lesson-layout) #training-panel .custom-hand-note{font-size:11px;color:#e5c785;margin:0 0 12px}
+#game:is(.custom-layout,.lesson-layout) #training-panel button:focus-visible,#game:is(.custom-layout,.lesson-layout) #training-panel select:focus-visible{outline:2px solid #f2d184;outline-offset:3px}
+@media(min-width:1001px){
+ #game:is(.custom-layout,.lesson-layout):not(.phone-play) #training-panel{left:28px;top:94px;bottom:32px;width:360px;max-height:none}
+ #game:is(.custom-layout,.lesson-layout):not(.phone-play) #scene{inset:90px 150px 32px 408px}
+ #game:is(.custom-layout,.lesson-layout):not(.phone-play) #scene canvas{filter:drop-shadow(0 0 7px #138cff55)}
+ #game:is(.custom-layout,.lesson-layout):not(.phone-play) #cue-control{right:48px;top:270px;bottom:95px;width:54px;height:auto;transform:none}
+ #game:is(.custom-layout,.lesson-layout):not(.phone-play) #pull-cue{height:100%;min-height:0;background:linear-gradient(90deg,#05111ed9,#101f2bd9);border:1px solid #376587;border-radius:22px}
+ #game:is(.custom-layout,.lesson-layout):not(.phone-play) .spin-control{top:-85px;right:-6px;width:66px;height:66px}
+ #game:is(.custom-layout,.lesson-layout):not(.phone-play) .cue-control.disabled{opacity:.7}
+ @media(max-height:800px){
+  #game:is(.custom-layout,.lesson-layout):not(.phone-play) #training-panel{top:75px;bottom:18px;padding:16px;width:330px;left:20px;font-size:12px}
+  #game:is(.custom-layout,.lesson-layout):not(.phone-play) #scene{left:366px;top:64px;bottom:18px;right:126px}
+  #game:is(.custom-layout,.lesson-layout):not(.phone-play) #training-panel .custom-title{font-size:25px;margin:12px 0 15px}
+  #game:is(.custom-layout,.lesson-layout):not(.phone-play) #training-panel .coach-stance{padding-bottom:11px;margin-bottom:10px}
+  #game:is(.custom-layout,.lesson-layout):not(.phone-play) #training-panel>label{margin-top:10px}
+  #game:is(.custom-layout,.lesson-layout):not(.phone-play) #training-panel>p{margin:8px 0;font-size:12px}
+  #game:is(.custom-layout,.lesson-layout):not(.phone-play) #training-panel .save-layout summary{padding:12px 0}
+  #game:is(.custom-layout,.lesson-layout):not(.phone-play) #cue-control{top:220px;bottom:70px;right:35px}
+ }
+}
+#game:is(.custom-layout,.lesson-layout).phone-play #training-panel{padding:12px;border-radius:12px;background:#071725f5}
+#game:is(.custom-layout,.lesson-layout).phone-play #training-panel .custom-title{font-size:23px;margin:12px 0}
+#game:is(.custom-layout,.lesson-layout).phone-play #training-panel .coach-stance legend{font-size:12px}

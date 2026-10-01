@@ -626,5 +626,5 @@ export function buildTournamentTable(scene, renderer) {
     for (const mesh of meshes) { scene.remove(mesh); mesh.geometry.dispose(); }
     for (const geometry of geometries) geometry.dispose();
   }
-  return { felt, cushion };
+  return { felt, cushion, hardware:silver, rails:black };
 }

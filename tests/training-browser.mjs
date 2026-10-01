@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 const browser=await chromium.launch({channel:'chrome',headless:true});
 try{
  const page=await browser.newPage({viewport:{width:1440,height:900}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
- await page.goto('http://127.0.0.1:5173/',{waitUntil:'networkidle'});
+ await page.goto(process.env.BASE_URL||'http://127.0.0.1:5173/',{waitUntil:'networkidle'});
  await page.locator('#practice-start').click();await page.locator('#training-start').click();assert.equal(await page.locator('.lesson-card').count(),12);
  await page.screenshot({path:'artifacts/training-library.png'});
  await page.locator('[data-lesson="straight-short"]').click();
@@ -23,10 +23,10 @@ try{
  },'straight-short');
  assert.deepEqual(await page.evaluate(()=>window.__noir.scene.tip),chosen.tip);
  assert.ok(Math.abs(await page.evaluate(()=>window.__noir.scene.angle)-chosen.angle)<1e-9);
- const box=await page.locator('#pull-cue').boundingBox();
- const travel=await page.evaluate(async()=>{const {pullTravel}=await import('/src/shot-control.js');return pullTravel(document.querySelector('#pull-cue').clientHeight);});
- await page.mouse.move(box.x+box.width/2,box.y+15);await page.mouse.down();
- await page.mouse.move(box.x+box.width/2,box.y+15+travel*chosen.power);await page.mouse.up();
+ const stroke=await page.evaluate(()=>{const s=window.__noir.scene,b=s.physics.cueBall,a=s.project(b.x,b.z),c=s.project(b.x-Math.cos(s.angle),b.z-Math.sin(s.angle)),n=Math.hypot(c.x-a.x,c.y-a.y),r=s.renderer.domElement.getBoundingClientRect();return {x:r.x+r.width*.65,y:r.y+r.height*.45,dx:(c.x-a.x)/n,dy:(c.y-a.y)/n,travel:Math.max(100,Math.min(230,s.renderer.domElement.clientHeight*.3))};});
+ await page.mouse.move(stroke.x,stroke.y);
+ await page.evaluate(angle=>{window.__noir.scene.angle=angle;},chosen.angle);
+ await page.mouse.down();await page.mouse.move(stroke.x+stroke.dx*stroke.travel*chosen.power,stroke.y+stroke.dy*stroke.travel*chosen.power);await page.mouse.up();
 
  await page.waitForFunction(()=>window.__noir.physics.shots===1);
  await page.waitForFunction(()=>!window.__noir.physics.moving,undefined,{timeout:60000});
@@ -50,7 +50,7 @@ try{
   assert.equal(await page.locator('#training-panel').isVisible(),false,'Coach is collapsed on phones');
   await page.screenshot({path:`artifacts/training-${size.width}.png`});
  }
- await page.locator('#phone-coach').click();await page.locator('[data-library]').click();await page.locator('[data-practice]').click();
+ await page.locator('#phone-coach').click();await page.locator('[data-library]').click();await page.locator('#training-library [data-practice]').click();
  assert.equal(await page.locator('#training-panel').isVisible(),false);
  assert.equal(await page.evaluate(()=>window.__noir.physics.balls.filter(b=>!b.pocketed).length),16);
  assert.deepEqual(errors,[]);console.log('PASS training: catalog, hints, real cue shot, scoring, retry, persistence, filters, responsive layouts, exit to practice');
