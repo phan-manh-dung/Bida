@@ -19,9 +19,17 @@ try{
   Object.assign(p.cueBall,{x:0,px:0,z:1.15,pz:1.15});Object.assign(p.balls.find(b=>b.id===9),{x:0,px:0,z:1.8,pz:1.8});
   s.angle=Math.PI/2;s.syncBalls(0);m.notify();
  });
- const box=await page.locator('#pull-cue').boundingBox();
- await page.mouse.move(box.x+box.width/2,box.y+box.height*.2);await page.mouse.down();
- await page.mouse.move(box.x+box.width/2,box.y+box.height*(.2+.45*.28),{steps:8});await page.mouse.up();
+ const stroke=await page.evaluate(()=>{
+   const s=window.__noir.scene,b=window.__noir.physics.cueBall;
+   const origin=s.project(b.x,b.z),back=s.project(b.x,b.z-1);
+   const length=Math.hypot(back.x-origin.x,back.y-origin.y);
+   const travel=Math.max(100,Math.min(230,s.renderer.domElement.clientHeight*.3))*.28;
+   return {x:origin.x,y:origin.y,dx:(back.x-origin.x)/length*travel,dy:(back.y-origin.y)/length*travel};
+ });
+ await page.mouse.move(stroke.x,stroke.y);
+ await page.evaluate(()=>{window.__noir.scene.angle=Math.PI/2;});
+ await page.mouse.down();
+ await page.mouse.move(stroke.x+stroke.dx,stroke.y+stroke.dy,{steps:8});await page.mouse.up();
  await page.waitForFunction(()=>window.__noir.match.phase==='match-over',{},{timeout:30000});
  assert.deepEqual(await page.evaluate(()=>window.__noir.match.score),[1,0]);
  await page.screenshot({path:'artifacts/match-win.png'});

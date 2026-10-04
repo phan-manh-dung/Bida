@@ -214,9 +214,9 @@ export class PoolScene {
     });
   }
   setCloth(color) {
-    const cloth = { gray: '#343a3d', green: '#285634', blue: '#20495c', wine: '#502b36' }[color] || '#343a3d';
+    const cloth = { gray: '#343a3d', green: '#285634', blue: '#1256a0', wine: '#502b36' }[color] || '#343a3d';
     this.feltMaterial.color.set(cloth);
-    this.cushionMaterial.color.set(cloth);
+    this.cushionMaterial.color.set(cloth).multiplyScalar(.92);
     this.cushionMaterial.emissive.set(cloth);
   }
   setView(view,preserveCamera=false) {
@@ -266,9 +266,9 @@ export class PoolScene {
     this.scene.background=enabled?null:new THREE.Color('#161b21');
     this.studioFloor.visible=!enabled;
     this.renderer.setClearColor('#161b21',enabled?0:1);
-    this.clubHardware.color.set(enabled?'#8999ad':'#7c6335');
-    this.clubHardware.roughness=enabled?.28:.5;
-    this.clubRails.color.set(enabled?'#708499':'#ffffff');
+    this.clubHardware.color.set('#89939f');
+    this.clubHardware.roughness=.27;
+    this.clubRails.color.set('#ffffff');
   }
   playArea() {
     const width = this.container.clientWidth, height = this.container.clientHeight;

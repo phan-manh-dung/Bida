@@ -5,7 +5,8 @@ const browser = await chromium.launch({ channel: 'chrome', headless: true });
 try {
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
   await page.goto(process.env.BASE_URL || 'http://127.0.0.1:5173/', { waitUntil: 'networkidle' });
-  await page.locator('#practice-start').click();await page.locator('#free-practice-start').click();
+  await page.waitForFunction(() => !!window.__noir);
+  await page.evaluate(() => window.__noir.startPractice());
   await page.waitForFunction(() => !!window.__noir?.scene);
   await page.screenshot({ path: 'artifacts/desktop-v2.png' });
   await page.evaluate(() => {
@@ -15,12 +16,12 @@ try {
   });
   await page.waitForTimeout(200);
   await page.screenshot({ path: 'artifacts/pocket-detail-v2.png' });
-  await page.locator('#menu-toggle').click(); await page.locator('[data-view="cue"]').click();
+  await page.evaluate(() => window.__noir.scene.setView('cue'));
   await page.screenshot({ path: 'artifacts/cue-view-v2.png' });
-  await page.locator('#menu-toggle').click(); await page.locator('[data-view="top"]').click();
+  await page.evaluate(() => window.__noir.scene.setView('top'));
   await page.screenshot({ path: 'artifacts/top-view-v2.png' });
   for (const [width,height] of [[390,844],[844,390]]) {
-    await page.setViewportSize({ width,height }); await page.locator('#menu-toggle').click(); await page.locator('[data-view="orbit"]').click();
+    await page.setViewportSize({ width,height }); await page.evaluate(() => window.__noir.scene.setView('orbit'));
     await page.waitForTimeout(150);
     await page.screenshot({ path: `artifacts/${width}x${height}-orbit-v2.png` });
   }
