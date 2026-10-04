@@ -33,31 +33,18 @@ function visualPocket(p) {
   }))).filter(j=>Math.abs(j.back.lateral)<.4 && j.back.depth>0 && j.back.depth<.4);
   const right=jaws.find(j=>j.back.lateral>0);
   return { jaw:right, mouthWidth:p.side?.230:.225, rearDepth:p.side?.51:.45,
-    castingWidth:p.side?.070:.090, linerInset:.004, wellWidth:.28, wellFloor:-.63 };
-}
-function createCornerPocketMouth(p) {
-  const {jaw,rearDepth}=visualPocket(p), {lateral:w,depth:d}=jaw.back;
-  const direction=new THREE.Vector2(w-jaw.nose.lateral,d-jaw.nose.depth).normalize();
-  const reach=(rearDepth-d)*.65;
-  const curve=new THREE.Path();
-  curve.moveTo(w,d);
-  curve.bezierCurveTo(w+direction.x*reach,d+direction.y*reach,w*.65,rearDepth,0,rearDepth);
-  curve.bezierCurveTo(-w*.65,rearDepth,-w-direction.x*reach,d+direction.y*reach,-w,d);
-  return curve.getPoints(40).map(v=>[v.x,v.y]);
-}
-function createSidePocketMouth(p) {
-  const {jaw,rearDepth}=visualPocket(p), {lateral:w,depth:d}=jaw.back;
-  const direction=new THREE.Vector2(w-jaw.nose.lateral,d-jaw.nose.depth).normalize();
-  const reach=(rearDepth-d)*.40;
-  const curve=new THREE.Path();
-  curve.moveTo(w,d);
-  curve.bezierCurveTo(w+direction.x*reach,d+direction.y*reach,w*.80,rearDepth,0,rearDepth);
-  curve.bezierCurveTo(-w*.80,rearDepth,-w-direction.x*reach,d+direction.y*reach,-w,d);
-  return curve.getPoints(40).map(v=>[v.x,v.y]);
+    castingWidth:p.side?.035:.040, linerInset:.004, wellWidth:.28, wellFloor:-.63 };
 }
 function pocketRearEdge(p) {
-  return p.side?createSidePocketMouth(p):createCornerPocketMouth(p);
+  const {jaw,rearDepth}=visualPocket(p);
+  const center=(p.front+rearDepth)/2,depth=(rearDepth-p.front)/2;
+  const start=Math.asin((jaw.back.depth-center)/depth);
+  return Array.from({length:41},(_,i)=>{
+    const angle=start+(Math.PI-2*start)*i/40;
+    return [Math.cos(angle)*(p.side?.215:.235),center+Math.sin(angle)*depth];
+  });
 }
+
 function offsetMouth(points,distance) {
   return points.map(([l,d],i)=>{
     const a=points[Math.max(0,i-1)],b=points[Math.min(points.length-1,i+1)];
@@ -68,7 +55,7 @@ function offsetMouth(points,distance) {
 // Sweep a machined cross-section around the mouth, instead of extruding a flat plate.
 function createPocketCasting(p) {
   const edge=pocketRearEdge(p),width=visualPocket(p).castingWidth;
-  const profile=[[0,.085],[.08,.115],[.24,.152],[.55,.176],[.87,.181],[1,.163],[1,.108]];
+  const profile=[[0,.085],[.08,.108],[.20,.133],[.38,.156],[.60,.173],[.80,.180],[1,.175],[1,.110]];
   const positions=[],uv=[],indices=[];
   for(let j=0;j<profile.length;j++){
     const [fraction,height]=profile[j];
@@ -96,25 +83,29 @@ function createPocketLip(p) {
   return facesGeometry(faces);
 }
 function roundedPocketOutline(p) {
-  const v=visualPocket(p),{back,nose}=v.jaw, rear=pocketRearEdge(p);
-  const t=(p.front-nose.depth)/(back.depth-nose.depth);
-  const w=THREE.MathUtils.lerp(nose.lateral,back.lateral,t);
-  // Shelf stays at its physical depth; sides follow the jaws into the tangent cup.
-  const shape=new THREE.Shape();
-  shape.moveTo(-w,p.front);
-  shape.quadraticCurveTo(0,p.front+.025,w,p.front);
-  shape.lineTo(...rear[0]);
-  for(const point of rear.slice(1))shape.lineTo(...point);
-  shape.closePath();
-  return shape.getPoints(12).map(v=>pocketPoint(p,v.x,v.y));
+  const {rearDepth}=visualPocket(p);
+  // Rounded cut in the slate, behind the unchanged physical pocket threshold.
+  // The cushion jaws above it still define the playable mouth.
+  const center=(p.front+rearDepth)/2;
+  const depth=(rearDepth-p.front)/2;
+  return Array.from({length:80},(_,i)=>{
+    const angle=i/80*Math.PI*2;
+    return pocketPoint(p,Math.cos(angle)*(p.side?.215:.235),center+Math.sin(angle)*depth);
+  });
 }
+
 function slab(shape, depth, bevel = 0) {
   const geometry = new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: bevel > 0, bevelThickness: bevel, bevelSize: bevel, bevelSegments: 3, steps: 1, curveSegments: 32 });
   geometry.rotateX(-Math.PI / 2); return geometry;
 }
 // Rounded casting edges supply restrained highlights without extra pocket rings.
 function metalCap(shape) {
-  return slab(shape, .10, .020);
+  const geometry = new THREE.ExtrudeGeometry(shape, {
+    depth: .090, bevelEnabled: true, bevelThickness: .035,
+    bevelSize: .035, bevelSegments: 8, steps: 1, curveSegments: 40,
+  });
+  geometry.rotateX(-Math.PI / 2);
+  return geometry;
 }
 function facesGeometry(faces) {
   const vertices = [], uv = [];
@@ -137,7 +128,8 @@ function cushionGeometry(c) {
   // Subdivide the visual cross-section so the end facings can turn smoothly.
   const profile = CUSHION_PROFILE.flatMap((point,i)=>{
     const next=CUSHION_PROFILE[(i+1)%CUSHION_PROFILE.length];
-    const steps=point[0]>=.16 && next[0]>=.16 ? 4 : 1;
+    const sideShoulder=c.nose.some(nose=>Math.abs(nose[0])<1);
+    const steps=sideShoulder ? 8 : point[0]>=.16 && next[0]>=.16 ? 4 : 1;
     return Array.from({length:steps},(_,j)=>[
       THREE.MathUtils.lerp(point[0],next[0],j/steps),
       THREE.MathUtils.lerp(point[1],next[1],j/steps),
@@ -151,6 +143,15 @@ function cushionGeometry(c) {
     const cutback = (noseHeight - h) * Math.tan(14 * Math.PI / 180) * (i === 0 ? 1 : -1);
     // Bow only the covered end facing; both measured endpoints remain fixed.
     const rounding=.024*Math.sin(Math.PI*t)**2*(i===0?1:-1);
+    if(Math.abs(nose[0])<1){
+      // A quarter-round shoulder eases out of the straight nose, then meets
+      // the oval mouth tangentially. This is visual rubber only.
+      const pocket=POCKET_DETAILS.find(p=>p.side&&Math.sign(p.z)===Math.sign(nose[1]));
+      const rear=pocketRearEdge(pocket)[0][0];
+      const round=.110*(1-Math.sqrt(Math.max(0,1-(1-t)**2)));
+      return [Math.sign(nose[0])*(THREE.MathUtils.lerp(Math.abs(nose[0]),rear,t)+round),
+        Y+h,THREE.MathUtils.lerp(nose[1],c.back[i][1],t)];
+    }
     return [
       THREE.MathUtils.lerp(nose[0], c.back[i][0], t) + along[0] * (cutback+rounding), Y + h,
       THREE.MathUtils.lerp(nose[1], c.back[i][1], t) + along[1] * (cutback+rounding),
@@ -187,26 +188,89 @@ export function buildTournamentTable(scene, renderer) {
   const box = (w, h, d, mat, x, y, z, r = 0.025) => {
     const mesh = add(new RoundedBoxGeometry(w, h, d, 4, r), mat, y); mesh.position.set(x, y, z); return mesh;
   };
-  // Deterministic walnut grain, stretched along each rail's length.
+  // Fine charcoal grain, stretched along each top rail.
   const woodTexture = texture(1024, 128, (ctx, w, h) => {
     const data = ctx.createImageData(w, h);
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
       const wave = y + 7 * Math.sin(x * .006 + y * .045) + 3 * Math.sin(x * .019 + y * .11);
-      const grain = Math.sin(wave * 2.5) * 4 + Math.sin(wave * .47 + Math.sin(wave * .17)) * 6;
+      const grain = Math.sin(wave * 2.5) * 2.0 + Math.sin(wave * .47 + Math.sin(wave * .17)) * 2.6;
       const noise = ((Math.imul(x + y * w + 1, 1597334677) >>> 16) % 7) - 3;
       const i = (y * w + x) * 4;
-      data.data[i] = 30 + grain * .7 + noise;
-      data.data[i + 1] = 16 + grain * .45 + noise;
-      data.data[i + 2] = 9 + grain * .25 + noise;
+      data.data[i] = 12 + grain + noise * .35;
+      data.data[i + 1] = 13 + grain + noise * .35;
+      data.data[i + 2] = 14 + grain + noise * .35;
       data.data[i + 3] = 255;
     }
     ctx.putImageData(data, 0, 0);
   });
   woodTexture.wrapS = woodTexture.wrapT = THREE.RepeatWrapping;
   woodTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-  const black = new THREE.MeshStandardMaterial({ color: '#ffffff', map: woodTexture, roughness: .55, metalness: 0, envMapIntensity: .035 });
+  const black = new THREE.MeshStandardMaterial({ color: '#ffffff', map: woodTexture, roughness: .68, metalness: .12, envMapIntensity: .12 });
   const cabinet = new THREE.MeshStandardMaterial({ color: '#101519', roughness: 0.35, metalness: 0.22 });
-  const silver = new THREE.MeshStandardMaterial({ color: '#89939f', roughness: .27, metalness: .95, envMapIntensity: .85, side: THREE.DoubleSide });
+  const brushedMetal = texture(256, 256, (ctx,w,h) => {
+    const data=ctx.createImageData(w,h);
+    for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+      const grain=((Math.imul(y+1,1597334677)>>>16)%9)-4;
+      const shade=210+22*Math.sin((x+y*.35)/w*Math.PI*2)+grain;
+      const i=(y*w+x)*4;
+      data.data[i]=data.data[i+1]=data.data[i+2]=shade;data.data[i+3]=255;
+    }
+    ctx.putImageData(data,0,0);
+  });
+  brushedMetal.wrapS=brushedMetal.wrapT=THREE.RepeatWrapping;
+  brushedMetal.anisotropy=renderer.capabilities.getMaxAnisotropy();
+  const silver = new THREE.MeshStandardMaterial({ map:brushedMetal, color: '#959b9f' , roughness: .43, metalness: .72, envMapIntensity: .65, side: THREE.DoubleSide });
+  // Pocket hardware has its own satin finish; rail inlays and lower hardware
+  // retain their existing material. Broad studio reflections reveal the bevels.
+  const metalStudio = new THREE.Scene();
+  metalStudio.background = new THREE.Color('#24272b');
+  const panels = [];
+  for (const [x,y,z,w,h,power] of [
+    [-3,5,1,2.8,8,3.0], [3,4,-2,1.5,7,1.6], [0,3,5,8,1.2,.8],
+  ]) {
+    const panel = new THREE.Mesh(new THREE.PlaneGeometry(w,h),
+      new THREE.MeshBasicMaterial({color:new THREE.Color(power,power*.98,power*.95),side:THREE.DoubleSide}));
+    panel.position.set(x,y,z);panel.lookAt(0,0,0);metalStudio.add(panel);panels.push(panel);
+  }
+  const metalPmrem = new THREE.PMREMGenerator(renderer);
+  const metalEnvironment = metalPmrem.fromScene(metalStudio,.12);
+  metalPmrem.dispose();
+  for(const panel of panels){panel.geometry.dispose();panel.material.dispose();}
+  const pocketMetal = new THREE.MeshStandardMaterial({
+    color:'#b6b8b9', metalness:1, roughness:.37,
+    envMap:metalEnvironment.texture, envMapIntensity:.68, side:THREE.DoubleSide,
+  });
+  pocketMetal.name='satin-platinum-pocket-trim';
+  pocketMetal.userData.environmentTarget=metalEnvironment;
+  pocketMetal.onBeforeCompile = shader => {
+    shader.vertexShader='varying vec3 vHardwarePoint;\n'+shader.vertexShader;
+    shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>',
+      '#include <begin_vertex>\nvHardwarePoint=(modelMatrix*vec4(transformed,1.0)).xyz;');
+    shader.fragmentShader='varying vec3 vHardwarePoint;\n'+shader.fragmentShader;
+    // Coordinates follow each fitting, with the same machining across all six.
+    shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
+      vec2 hp=abs(vHardwarePoint.xz);
+      bool sideCap=hp.x<0.7;
+      vec2 local=sideCap?vec2(vHardwarePoint.x,hp.y-${Z.toFixed(6)}):hp-vec2(${X.toFixed(6)},${Z.toFixed(6)});
+      float across=sideCap?local.y:(local.x+local.y)*0.707107;
+      float along=sideCap?local.x:(local.x-local.y)*0.707107;
+      float grain=sin(across*2100.0+sin(along*32.0)*.3);
+      float grainAA=1.0-smoothstep(.35,1.5,fwidth(across*2100.0));
+      float satin=.84+.12*smoothstep(.32,.64,across);
+      diffuseColor.rgb*=satin+grain*.018*grainAA;`);
+    // A shallow crown bends the broad reflection across the top, while actual
+    // rolled bevels retain their geometric normals and narrow edge highlights.
+    shader.fragmentShader=shader.fragmentShader.replace('#include <normal_fragment_begin>',`#include <normal_fragment_begin>
+      vec3 worldNormal=inverseTransformDirection(normal,viewMatrix);
+      if(worldNormal.y>.95){
+        vec2 slope=sideCap?vec2(along*.14,(across-.55)*1.45):
+          vec2((local.x-.32)*.95,(local.y-.32)*.95);
+        slope*=vec2(sideCap?1.0:sign(vHardwarePoint.x),sign(vHardwarePoint.z));
+        normal=normalize(normal+mat3(viewMatrix)*vec3(slope.x,0.0,slope.y));
+      }`);
+    shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>',
+      '#include <roughnessmap_fragment>\nroughnessFactor+=.035*sin(across*95.0)*grainAA;');
+  };
   const leather = new THREE.MeshStandardMaterial({ color: '#080a0b', roughness: 0.76, side: THREE.DoubleSide });
   const pocketBase = new THREE.MeshBasicMaterial({ color: '#010203', side: THREE.DoubleSide });
 
@@ -232,7 +296,7 @@ export function buildTournamentTable(scene, renderer) {
     // Low-contrast, aperiodic fibers; mipmaps average the grain at playing distance.
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
       const hash = Math.imul(x + y * w + 1, 1597334677) ^ Math.imul(x + 13, 3812015801);
-      const i = (y * w + x) * 4, shade = 230 + ((hash >>> 16) % 19) + 0.7 * Math.sin(x * .037) * Math.sin(y * .029);
+      const i = (y * w + x) * 4, shade = 225 + ((hash >>> 16) % 21) + 0.6 * Math.sin(x * .037) * Math.sin(y * .029);
       data.data[i] = data.data[i + 1] = data.data[i + 2] = shade; data.data[i + 3] = 255;
     }
     ctx.putImageData(data, 0, 0);
@@ -241,7 +305,7 @@ export function buildTournamentTable(scene, renderer) {
   feltTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
   // Cloth is diffuse. Vertex lighting avoids costly glossy/bump shading across
   // most of the viewport, while the rounded cushion normals retain their volume.
-  const felt = new THREE.MeshLambertMaterial({ color: '#1256a0', map: feltTexture });
+  const felt = new THREE.MeshLambertMaterial({ color: '#5e6569', map: feltTexture });
   // Stable broad illumination and a narrow cushion contact falloff, evaluated
   // from table coordinates. No moving shadow or per-frame image accumulation.
   felt.onBeforeCompile = shader => {
@@ -251,10 +315,28 @@ export function buildTournamentTable(scene, renderer) {
     shader.fragmentShader = shader.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
       vec2 tablePoint = vTablePoint.xz;
       float railDistance = min(${X.toFixed(2)} - abs(tablePoint.x), ${Z.toFixed(2)} - abs(tablePoint.y));
-      float cushionShade = mix(0.82, 1.0, smoothstep(0.0, 0.22, railDistance));
+      float cushionShade = mix(0.77, 1.0, smoothstep(0.0, 0.18, railDistance));
       diffuseColor.rgb *= cushionShade;`);
   };
-  const cushion = new THREE.MeshLambertMaterial({ color: '#1256a0', emissive: '#000000', emissiveIntensity: 0, map: feltTexture, side: THREE.DoubleSide });
+  const cushion = new THREE.MeshLambertMaterial({ color: '#5e6569', emissive: '#000000', emissiveIntensity: 0, map: feltTexture, side: THREE.DoubleSide });
+  // Cut only the visual rubber tops to the same rounded aperture as the slate.
+  // Nose positions, collision segments and pocket thresholds remain in table-model.
+  cushion.onBeforeCompile = shader => {
+    shader.vertexShader='varying vec3 vCushionPoint;\n'+shader.vertexShader;
+    shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>',
+      '#include <begin_vertex>\nvCushionPoint=(modelMatrix*vec4(transformed,1.0)).xyz;');
+    shader.fragmentShader='varying vec3 vCushionPoint;\n'+shader.fragmentShader;
+    const cuts=POCKET_DETAILS.map(p=>{
+      const rear=visualPocket(p).rearDepth,center=(p.front+rear)/2,depth=(rear-p.front)/2;
+      const f=n=>Number(n).toFixed(6);
+      return `{vec2 delta=vCushionPoint.xz-vec2(${f(p.x)},${f(p.z)});
+        vec2 q=vec2(dot(delta,vec2(${f(p.tx)},${f(p.tz)}))/${f(p.side?.215:.235)},
+        (dot(delta,vec2(${f(p.nx)},${f(p.nz)}))-${f(center)})/${f(depth)});
+        if(dot(q,q)<1.0)discard;}`;
+    }).join('\n');
+    shader.fragmentShader=shader.fragmentShader.replace('#include <clipping_planes_fragment>',
+      '#include <clipping_planes_fragment>\n'+cuts);
+  };
   const bed = rounded(X + 0.62, Z + 0.62, 0.10);
   const pocketOutlines=POCKET_DETAILS.map(roundedPocketOutline);
   for (const outline of pocketOutlines) bed.holes.push(path(outline, true));
@@ -280,41 +362,40 @@ export function buildTournamentTable(scene, renderer) {
 
   // Six lacquered rail sections and inset sights.
   for (const sz of [-1, 1]) for (const sx of [-1, 1]) {
-    const start = 0.43, end = X - 0.50;
+    const start = 0.29, end = X - 0.10;
     box(end - start, 0.14, 0.42, black, sx * (start + end) / 2, Y + 0.115, sz * (Z + 0.55), 0.018);
   }
   for (const sx of [-1, 1]) {
-    const rail = box(2 * (Z - 0.5), 0.14, 0.42, black, sx * (X + 0.55), Y + 0.115, 0, 0.018);
+    const rail = box(2 * (Z - 0.10), 0.14, 0.42, black, sx * (X + 0.55), Y + 0.115, 0, 0.018);
     rail.rotation.y = Math.PI / 2;
   }
 
-  // Walnut corner backing continues the rails. Only the close-fitting U-shaped
-  // insert is metal; the broad quarter-corner is no longer a silver plate.
+  // Compact satin corner plates join the straight charcoal rails.
   for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
-    const outline = [[-0.50, 0.76], [0.34, 0.76]];
+    const outline = [[-0.10, 0.76], [0.34, 0.76]];
     for (let i = 1; i <= 24; i++) {
       const a = Math.PI / 2 - i / 24 * Math.PI / 2;
       outline.push([0.34 + Math.cos(a) * 0.42, 0.34 + Math.sin(a) * 0.42]);
     }
-    outline.push([0.76, -0.50], [0.34, -0.50]);
+    outline.push([0.76, -0.10], [0.34, -0.10]);
     // The cap ends at the BACK of each facing, never intruding over the sloped cloth.
     const canonical = POCKET_DETAILS.find(p => p.x === X && p.z === Z);
     for (const [l,d] of offsetMouth(pocketRearEdge(canonical),visualPocket(canonical).castingWidth)) {
       const [x,z] = pocketPoint(canonical,l,d);
       outline.push([x-X,z-Z]);
     }
-    outline.push([-0.50, 0.34]);
-    const cap = add(metalCap(path(outline.map(([x, z]) => [sx * (X + x), sz * (Z + z)]))), black, Y + 0.05);
+    outline.push([-0.10, 0.34]);
+    const cap = add(metalCap(path(outline.map(([x, z]) => [sx * (X + x), sz * (Z + z)]))), pocketMetal, Y + 0.05);
     cap.name = 'corner-rail-backing';
     const pocket = POCKET_DETAILS.find(p=>p.x===sx*X && p.z===sz*Z);
-    add(createPocketCasting(pocket),silver).name='corner-pocket-casting';
+    add(createPocketCasting(pocket),pocketMetal).name='corner-pocket-casting';
   }
   for (const p of POCKET_DETAILS.filter(p => p.side)) {
-    const coords = [[-0.43, 0.76], [0.43, 0.76], [0.43, 0.34]];
+    const coords = [[-0.29, 0.76], [0.29, 0.76], [0.29, 0.34]];
     coords.push(...offsetMouth(pocketRearEdge(p),visualPocket(p).castingWidth));
-    coords.push([-0.43, 0.34]);
-    add(metalCap(path(coords.map(([l, d]) => pocketPoint(p, l, d)))), silver, Y + 0.05).name = 'side-pocket-cap';
-    add(createPocketCasting(p),silver).name='side-pocket-transition';
+    coords.push([-0.29, 0.34]);
+    add(metalCap(path(coords.map(([l, d]) => pocketPoint(p, l, d)))), pocketMetal, Y + 0.05).name = 'side-pocket-cap';
+    add(createPocketCasting(p),pocketMetal).name='side-pocket-transition';
   }
   for (const [pocketIndex,p] of POCKET_DETAILS.entries()) {
     const v = visualPocket(p), mouth = pocketOutlines[pocketIndex];
@@ -344,7 +425,7 @@ export function buildTournamentTable(scene, renderer) {
   const sightMaterial = new THREE.MeshBasicMaterial({ color: '#f0eee1' });
   const sight = (x, z) => {
     const diamond = new THREE.Shape();
-    diamond.moveTo(0, .050); diamond.lineTo(.030, 0); diamond.lineTo(0, -.050); diamond.lineTo(-.030, 0); diamond.closePath();
+    diamond.moveTo(0, .050); diamond.quadraticCurveTo(.012,.014,.040,0); diamond.quadraticCurveTo(.012,-.014,0,-.050); diamond.quadraticCurveTo(-.012,-.014,-.040,0); diamond.quadraticCurveTo(-.012,.014,0,.050); diamond.closePath();
     const m = add(new THREE.ShapeGeometry(diamond), sightMaterial, Y + 0.190);
     m.rotation.x=-Math.PI/2;if(Math.abs(x)>X)m.rotation.z=Math.PI/2;m.position.x=x;m.position.z=z;m.castShadow=m.receiveShadow=false;
   };

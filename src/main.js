@@ -265,9 +265,13 @@ function setCloth(color) {
   });
 }
 document.querySelectorAll('[data-cloth]').forEach(button => button.addEventListener('click', () => setCloth(button.dataset.cloth)));
-// Apply the requested charcoal surface once; subsequent colour choices persist.
-setCloth(read('surface-v8', '') ? read('cloth', 'gray') : 'gray');
-save('surface-v8', '1');
+// Apply the new slate surface once to each mode, including stored wine cloth.
+// Later explicit colour choices remain persistent.
+if (!read('surface-slate-v1', '')) {
+  for (const key of ['cloth','free-cloth','match-cloth','custom-cloth','lesson-cloth']) save(key,'gray');
+  save('surface-slate-v1','1');
+}
+setCloth(read('cloth','gray'));
 $('#guide').checked = read('guide', 'true') === 'true'; if (scene) scene.aimVisible = $('#guide').checked;
 $('#guide').addEventListener('change', e => { if (scene) scene.aimVisible = e.target.checked; if(mode==='training'&&e.target.checked)training.markAssisted(); save('guide', String(e.target.checked)); });
 $('#fullscreen').addEventListener('click', async () => {
@@ -288,7 +292,7 @@ function renderAudio() {
 }
 $('#sound').addEventListener('change', event => { audio.enabled = event.target.checked; save('sound',String(audio.enabled)); audio.unlock().catch(() => {}); });
 $('#reset-settings').addEventListener('click',()=>{
-  setCloth(mode==='match'||mode==='practice'||$('#game').classList.contains('custom-layout')||$('#game').classList.contains('lesson-layout')?'blue':'gray');
+  setCloth('gray');
   $('#guide').checked=mode==='match'?match?.config.aid!=='none':true;
   $('#guide').dispatchEvent(new Event('change'));
   audio.enabled=audio.ready;save('sound',String(audio.enabled));renderAudio();
@@ -308,7 +312,7 @@ function renderMatch(m){
   if(scene){scene.inputLocked=!m.canHumanShoot;scene.showCue=m.phase==='lag-ready'||m.phase==='playing';scene.pocketLabels.visible=m.phase==='playing'&&m.config.game==='8'&&!m.breaking;}
   renderState();
 }
-function enterGame(){closeDialogs();$('#game').classList.toggle('free-layout',mode==='practice');document.querySelectorAll('.match-navigation [aria-current]').forEach(b=>{b.classList.remove('active');b.removeAttribute('aria-current');});const nav=document.querySelector(mode==='practice'?'[data-match-practice]':'[data-match-setup]');nav?.classList.add('active');nav?.setAttribute('aria-current','page');$('#game').classList.toggle('match-layout',mode==='match');$('#game').hidden=false;if(scene){const custom=$('#game').classList.contains('custom-layout');const lesson=$('#game').classList.contains('lesson-layout');scene.setClubPresentation(mode==='match'||mode==='practice'||custom||lesson);if(mode==='training')setCloth(read(custom?'custom-cloth':lesson?'lesson-cloth':'cloth',custom||lesson?'blue':'gray'));scene.suspended=false;scene.resize();scene.setView('top');document.querySelectorAll('[data-view]').forEach(b=>{b.classList.toggle('active',b.dataset.view==='top');b.setAttribute('aria-pressed',String(b.dataset.view==='top'));});}}
+function enterGame(){closeDialogs();$('#game').classList.toggle('free-layout',mode==='practice');document.querySelectorAll('.match-navigation [aria-current]').forEach(b=>{b.classList.remove('active');b.removeAttribute('aria-current');});const nav=document.querySelector(mode==='practice'?'[data-match-practice]':'[data-match-setup]');nav?.classList.add('active');nav?.setAttribute('aria-current','page');$('#game').classList.toggle('match-layout',mode==='match');$('#game').hidden=false;if(scene){const custom=$('#game').classList.contains('custom-layout');const lesson=$('#game').classList.contains('lesson-layout');scene.setClubPresentation(mode==='match'||mode==='practice'||custom||lesson);if(mode==='training')setCloth(read(custom?'custom-cloth':lesson?'lesson-cloth':'cloth','gray'));scene.suspended=false;scene.resize();scene.setView('top');document.querySelectorAll('[data-view]').forEach(b=>{b.classList.toggle('active',b.dataset.view==='top');b.setAttribute('aria-pressed',String(b.dataset.view==='top'));});}}
 function goHome(){navigation?.home();renderHome();}
 function renderHome(){
   $('#game').classList.remove('free-layout','free-panel-open');
@@ -325,14 +329,14 @@ function startPractice(){
   training?.close();$('#game').classList.remove('training-layout');
   $('#menu-dialog .muted').textContent='Người chơi tự do · Luyện tập 15 bi';
   $('#guide').checked=read('guide','true')==='true';
-  match?.dispose();match=null;mode='practice';releasing=false;physics.reset('rack');enterGame();setCloth(read('free-cloth','blue'));
+  match?.dispose();match=null;mode='practice';releasing=false;physics.reset('rack');enterGame();setCloth(read('free-cloth','gray'));
   scene.angle=0;scene.inputLocked=false;scene.showCue=true;scene.ghostEnabled=true;scene.aimVisible=$('#guide').checked;scene.followBall=false;scene.pocketLabels.visible=false;scene.syncBalls(0);matchHUD.render(null);freePractice?.open();renderState();
 }
 function startMatch(config){
   training?.close();$('#game').classList.remove('training-layout');
   if(!scene)throw new Error('Không mở được bàn 3D. Hãy bật tăng tốc đồ họa trong trình duyệt.');
   navigation?.enter('match',config);
-  match?.dispose();match=null;mode='match';releasing=false;setCloth(read('match-cloth','blue'));enterGame();
+  match?.dispose();match=null;mode='match';releasing=false;setCloth(read('match-cloth','gray'));enterGame();
   scene.aimVisible=config.aid!=='none';scene.ghostEnabled=config.aid==='ghost';scene.followBall=false;
   $('#guide').checked=scene.aimVisible;
   match=new PoolMatch(physics,scene,config,renderMatch);renderMatch(match);

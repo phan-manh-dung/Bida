@@ -89,7 +89,7 @@ h2 { font-size: 23px; font-weight: 500; margin: 0 0 25px; }
 .cloth-options { display: flex; gap: 12px; }
 .cloth-swatch { display: grid; place-items: center; width: 23px; height: 23px; border-radius: 50%; }
 .cloth-swatch[data-cloth=blue] { background: #21779e; }
-.cloth-swatch[data-cloth=gray] { background: #343a3d; }
+.cloth-swatch[data-cloth=gray] { background: #5e6569; }
 .cloth-swatch[data-cloth=green] { background: #18705a; }
 .cloth-swatch[data-cloth=wine] { background: #8c3b50; }
 .cloth-swatch[aria-pressed=true] { outline: 1px solid #b6cbd4; outline-offset: 3px; }
