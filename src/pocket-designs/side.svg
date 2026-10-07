@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1000" viewBox="0 0 1000 1000" fill="none">
+<title>side: original uploaded vector paths</title>
+<g>
+<path id="trim" d="M655 540H572.564C582.349 522.867 588 502.651 588 481C588 419.144 541.885 369 485 369C428.115 369 382 419.144 382 481C382 502.651 387.651 522.867 397.436 540H315V248H655V540Z" fill="#B7BDC2"/>
+<ellipse id="mouth" cx="485" cy="447" rx="135" ry="112" fill="#343333"/>
+<path id="jaw-left" d="M407 599.245L426 500" stroke="#156CB8" stroke-width="3"/>
+<path id="jaw-right" d="M565 600.519L546.425 500" stroke="#156CB8" stroke-width="3"/>
+</g>
+</svg>

@@ -14,6 +14,12 @@ const UP = new THREE.Vector3(0, 1, 0);
 const CUE_AXIS = new THREE.Vector3(1, 0, 0);
 const poseAxis = new THREE.Vector3();
 const nextRotation = new THREE.Quaternion();
+let previewScene;
+if(import.meta.hot){
+  import.meta.hot.accept('./table-visual.js',module=>{
+    if(module&&previewScene)previewScene.refreshTableVisual(module.buildTournamentTable);
+  });
+}
 function ballTexture(id) {
   return texture(1024, 512, (ctx, w, h) => {
     ctx.fillStyle = id > 8 ? '#fffef5' : BALL_COLORS[id]; ctx.fillRect(0, 0, w, h);
@@ -85,7 +91,9 @@ export class PoolScene {
     this.cueCamera=mountCueCamera(this);
     this.contactAid=mountContactAid(this);
     this.buildRoom();
+    const existingObjects=new Set(this.scene.children);
     const materials = buildTournamentTable(this.scene, this.renderer);
+    this.tableVisualObjects=this.scene.children.filter(object=>!existingObjects.has(object));
     this.clubHardware=materials.hardware;this.clubRails=materials.rails;
     this.feltMaterial = materials.felt; this.cushionMaterial = materials.cushion;
     this.buildBalls(); this.buildCue(); this.buildGuide(); this.bindInput();
@@ -94,6 +102,38 @@ export class PoolScene {
     this.lastTime = performance.now();
     this.tick = this.animate.bind(this);
     this.frame = requestAnimationFrame(this.tick);
+    if(import.meta.hot)previewScene=this;
+  }
+  refreshTableVisual(build){
+    // Build off-screen first; a failed SVG edit leaves the current table intact.
+    const staging=new THREE.Scene();
+    const materials=build(staging,this.renderer);
+    materials.felt.color.copy(this.feltMaterial.color);
+    materials.cushion.color.copy(this.cushionMaterial.color);
+    materials.cushion.emissive.copy(this.cushionMaterial.emissive);
+    const markings=staging.getObjectByName('table-markings');
+    if(markings)markings.visible=this.scene.getObjectByName('table-markings')?.visible??true;
+    const old=this.tableVisualObjects;
+    this.tableVisualObjects=[...staging.children];
+    this.scene.remove(...old);
+    this.scene.add(...this.tableVisualObjects);
+    this.feltMaterial=materials.felt;this.cushionMaterial=materials.cushion;
+    this.clubHardware=materials.hardware;this.clubRails=materials.rails;
+    this.renderer.shadowMap.needsUpdate=true;
+    this.renderer.render(this.scene,this.camera);
+    // Dispose only table-owned resources, never ball/cue/room resources.
+    const geometries=new Set(),mats=new Set(),textures=new Set(),targets=new Set();
+    for(const root of old)root.traverse(object=>{
+      if(object.geometry)geometries.add(object.geometry);
+      if(object.material)for(const material of [].concat(object.material))mats.add(material);
+    });
+    for(const material of mats){
+      for(const value of Object.values(material))if(value?.isTexture)textures.add(value);
+      if(material.userData.environmentTarget)targets.add(material.userData.environmentTarget);
+    }
+    for(const target of targets){textures.delete(target.texture);target.dispose();}
+    for(const resource of [...geometries,...mats,...textures])resource.dispose();
+    this.tableVisualRevision=(this.tableVisualRevision||0)+1;
   }
   buildRoom() {
     this.scene.add(new THREE.HemisphereLight('#e3efff', '#192027', 0.8));

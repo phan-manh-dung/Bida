@@ -375,3 +375,9 @@ $('#help-dialog ol li:nth-child(3)').textContent='Đưa chuột về vị trí b
 $('#help-dialog ol li:nth-child(4)').textContent='Theo cơ: lượt bạn nhìn theo hướng ngắm, lượt đối thủ nhìn ngang toàn bàn. Cuộn chuột để nâng/hạ góc nhìn, không zoom. Điện thoại kéo hai ngón lên/xuống để đổi độ cao.';
 goHome();renderState();renderAudio();mountMobilePlay(scene,cancelPull);
 if (import.meta.env.DEV) window.__noir = { physics, scene, audio, cancelPull, get match(){return match;},startMatch,startPractice,goHome };
+if(import.meta.hot&&scene){
+  import('./dev-practice-reload.js').then(({keepPracticePreview})=>{
+    keepPracticePreview({hot:import.meta.hot,scene,physics,isPractice:()=>mode==='practice',startPractice,changed:renderState});
+    window.__noir.previewReloadReady=true;
+  });
+}
